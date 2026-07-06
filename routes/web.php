@@ -1,40 +1,37 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
-
-Route::get('/smart-door', function () {
-    return Inertia::render('SmartDoor');
-})->name('smart-door');
-
-// Route สำหรับเรียกหน้าเกม Mini RTS
-Route::get('/mini-rts', function () {
-    return Inertia::render('MiniRTS');
-})->name('mini-rts');
-
+// 1. หน้า Dashboard
 Route::get('/drone-system', function () {
     return Inertia::render('DroneDashboard');
 })->name('drone.system');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// 2. ดึงข้อมูลโดรน
+Route::get('/api/drones', function () {
+    $drones = DB::table('drone_fleets')->get();
+    return response()->json($drones);
 });
 
-require __DIR__.'/auth.php';
+// 3. บันทึกข้อมูลโดรนตัวใหม่
+Route::post('/api/drones', function (Request $request) {
+    try {
+        $id = DB::table('drone_fleets')->insertGetId([
+            'drone_code' => strtoupper($request->input('id')),
+            'model_name' => $request->input('name'),
+            'battery_capacity' => 10000,
+            'max_speed' => 60.50,
+            'payload_module' => $request->input('payload'),
+            'status' => 'Standby',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        return response()->json(['success' => true, 'db_id' => $id]);
+    } catch (\Exception $e) {
+        // ดักจับ Error กรณีรหัสโดรน (drone_code) ซ้ำ
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+    }
+});
