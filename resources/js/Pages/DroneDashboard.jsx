@@ -1,7 +1,6 @@
 import BootstrapLayout from "@/Layouts/BootstrapLayout";
 import { Head } from "@inertiajs/react";
 import { useState, useEffect } from "react";
-import axios from "axios"; // 🟢 สำคัญมาก! นำเข้า axios เพื่อให้ส่งข้อมูลผ่านระบบป้องกันของ Laravel ได้
 
 export default function DroneDashboard() {
     const [drones, setDrones] = useState([]);
@@ -16,12 +15,14 @@ export default function DroneDashboard() {
     const activeDrone = drones.find(d => d.id === selectedDroneId);
 
     // ======================================================================
-    // 🚀 1. ดึงข้อมูลจากฐานข้อมูลด้วย axios
+    // 🚀 1. ดึงข้อมูลจาก SQLite ทันทีที่เปิดหน้าเว็บ (On Mount)
     // ======================================================================
     useEffect(() => {
-        axios.get('/api/drones')
-            .then(res => {
-                const loadedDrones = res.data.map(dbDrone => ({
+        fetch('/api/drones')
+            .then(res => res.json())
+            .then(data => {
+                // แปลงข้อมูลจาก DB (SQL) ให้เข้ากับโครงสร้างแบบฟิสิกส์ (State) ของ React เรา
+                const loadedDrones = data.map(dbDrone => ({
                     id: dbDrone.drone_code,
                     name: dbDrone.model_name,
                     type: "DB_UNIT",
@@ -37,22 +38,29 @@ export default function DroneDashboard() {
                 if(loadedDrones.length > 0) setSelectedDroneId(loadedDrones[0].id);
                 
                 setLogs(prev => [{ time: new Date().toLocaleTimeString(), src: "SYS", msg: `DATABASE SYNC COMPLETE. ${loadedDrones.length} UNITS FOUND.` }, ...prev]);
-            })
-            .catch(err => console.error("โหลดข้อมูลล้มเหลว:", err));
+            });
     }, []);
 
     // ======================================================================
-    // 🚀 2. บันทึกโดรนตัวใหม่ด้วย axios
+    // 🚀 2. บันทึกโดรนตัวใหม่ลง SQLite เมื่อกดปุ่ม Deploy
     // ======================================================================
     const handleDeployDrone = async (e) => {
         e.preventDefault();
         if(!newDrone.id || !newDrone.name) return;
 
         try {
-            // ใช้ axios ส่งข้อมูลไปที่ Laravel
-            const response = await axios.post('/api/drones', newDrone);
+            // ยิง HTTP POST ไปหา Laravel เพื่อสั่งให้ Insert ลง Database
+            const response = await fetch('/api/drones', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(newDrone) // ส่ง State ของฟอร์มข้ามไปให้ Laravel
+            });
 
-            if (response.data.success) {
+            if (response.ok) {
+                // ถ้ายิงผ่านและบันทึกลง DB สำเร็จ ค่อยสร้างโดรนในหน้าจอเรา
                 const newUnit = {
                     id: newDrone.id.toUpperCase(),
                     name: newDrone.name,
@@ -63,22 +71,22 @@ export default function DroneDashboard() {
                     lat: 14.120000 + (Math.random() * 0.005), lng: 100.610000 + (Math.random() * 0.005), signal: 100
                 };
 
-                setDrones(prev => [...prev, newUnit]);
+                setDrones(prev => [...prev, newUnit]); // อัปเดต React State
                 setSelectedDroneId(newUnit.id);
                 setIsDeploying(false);
                 setNewDrone({ id: "", name: "", type: "Quad-Copter", payload: "Optical Camera" });
 
                 const time = new Date().toLocaleTimeString('th-TH');
                 setLogs(prev => [{ time, src: "SYS", msg: `[SQLITE_INSERT_OK]: UNIT ${newUnit.id} REGISTERED TO DB.` }, ...prev]);
+            } else {
+                alert("เกิดข้อผิดพลาด! รหัสโดรนนี้อาจจะซ้ำกับใน Database");
             }
         } catch (error) {
-            // ถ้า Error (เช่น ใส่ ID ซ้ำกับที่มีใน DB)
-            alert("บันทึกล้มเหลว! รหัสโดรนนี้อาจมีซ้ำอยู่ใน Database แล้ว (CALL SIGN ต้องห้ามซ้ำกัน)");
-            console.error("Database Save Error:", error);
+            console.error("Database connection failed", error);
         }
     };
 
-    // ฟังก์ชันสั่งการ (คงเดิม)
+    // ฟังก์ชันสั่งการ (ควบคุมการบิน)
     const executeCommand = (cmd) => {
         setDrones(prev => prev.map(d => {
             if (d.id === selectedDroneId) {
@@ -92,7 +100,7 @@ export default function DroneDashboard() {
         setLogs(prev => [{ time, src: selectedDroneId, msg: `COMMAND: [${cmd}] Executed.` }, ...prev]);
     };
 
-    // ระบบจำลอง Telemetry (คงเดิม)
+    // ระบบจำลอง Telemetry แบบเรียลไทม์ (Simulation)
     useEffect(() => {
         const interval = setInterval(() => {
             setDrones(prevDrones => prevDrones.map(drone => {
@@ -102,8 +110,11 @@ export default function DroneDashboard() {
                         battery: Math.max(0, drone.battery - (Math.random() > 0.8 ? 1 : 0)),
                         altitude: Math.max(5, drone.altitude + (Math.random() * 2 - 1)),
                         speed: Math.max(10, drone.speed + (Math.random() * 4 - 2)),
-                        pitch: (Math.random() * 8 - 4), roll: (Math.random() * 12 - 6), yaw: (drone.yaw + (Math.random() * 4 - 2)) % 360,
-                        lat: drone.lat + (Math.random() * 0.0001 - 0.00005), lng: drone.lng + (Math.random() * 0.0001 - 0.00005),
+                        pitch: (Math.random() * 8 - 4), 
+                        roll: (Math.random() * 12 - 6),
+                        yaw: (drone.yaw + (Math.random() * 4 - 2)) % 360,
+                        lat: drone.lat + (Math.random() * 0.0001 - 0.00005),
+                        lng: drone.lng + (Math.random() * 0.0001 - 0.00005),
                         signal: Math.max(40, drone.signal - (Math.random() > 0.8 ? 1 : 0))
                     };
                 }
@@ -113,7 +124,7 @@ export default function DroneDashboard() {
         return () => clearInterval(interval);
     }, []);
 
-    // 🎨 CSS Tactical Theme (คงเดิม)
+    // 🎨 CSS Tactical Theme (ซ่อนโค้ด CSS ไว้ตรงนี้เหมือนเดิม)
     const tacticalStyles = `
         .hud-box { border: 1px solid #198754; background: rgba(0, 20, 0, 0.4); }
         .text-neon { text-shadow: 0 0 5px #20c997; }
