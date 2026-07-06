@@ -14,6 +14,19 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/smart-door', function () {
+    return Inertia::render('SmartDoor');
+})->name('smart-door');
+
+// Route สำหรับเรียกหน้าเกม Mini RTS
+Route::get('/mini-rts', function () {
+    return Inertia::render('MiniRTS');
+})->name('mini-rts');
+
+Route::get('/drone-system', function () {
+    return Inertia::render('DroneDashboard');
+})->name('drone.system');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
