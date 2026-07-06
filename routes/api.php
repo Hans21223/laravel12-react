@@ -10,6 +10,11 @@ Route::get('/drones', function () {
     return response()->json($drones);
 });
 
+// Route API ที่ถูกต้อง
+Route::get('/api/drones', function () {
+    return response()->json(\Illuminate\Support\Facades\DB::table('drone_fleets')->get());
+});
+
 // 2. Route สำหรับรับข้อมูลจาก React มาบันทึกลง SQLite
 Route::post('/drones', function (Request $request) {
     // นำข้อมูลที่ React ส่งมา (JSON) บันทึกลงตาราง drone_fleets

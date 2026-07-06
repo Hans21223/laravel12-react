@@ -27,9 +27,9 @@ Route::get('/drone-system', function () {
     return Inertia::render('DroneDashboard');
 })->name('drone.system');
 
-Route::get('/drone-database', function () {
+Route::get('/quiz4', function () {
     return Inertia::render('DroneDatabase');
-})->name('drone.database');
+})->name('quiz4');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
