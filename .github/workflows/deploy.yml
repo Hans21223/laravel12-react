@@ -31,33 +31,15 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       - run: npm ci
       - run: npm run check:i18n && npm run build && php artisan test
-      - name: Package tested assets
-        run: tar -czf ae-build.tar.gz public/build scripts/deploy-server.sh scripts/deploy-database.php
-      - name: Transfer assets to deployment staging
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ae-build.tar.gz
-          target: /tmp/anaheim-${{ github.run_id }}-${{ github.run_attempt }}
-      - name: Back up and deploy the tested commit
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Transfer, back up, and deploy using one SSH connection
         env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           DEPLOY_SHA: ${{ github.sha }}
           DEPLOY_STAGE: /tmp/anaheim-${{ github.run_id }}-${{ github.run_attempt }}
           INITIAL_MANAGER_HASH: ${{ secrets.AE_INITIAL_MANAGER_HASH }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DEPLOY_SHA,DEPLOY_STAGE,INITIAL_MANAGER_HASH
-          command_timeout: 12m
-          script: |
-            set -eu
-            cd "$DEPLOY_STAGE"
-            tar -xzf ae-build.tar.gz
-            bash scripts/deploy-server.sh
+        run: python3 scripts/deploy-transport.py
       - name: Verify the public application
         run: |
           curl --fail --silent --show-error --retry 3 https://helldriver.csbootstrap.com/up
