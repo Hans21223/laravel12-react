@@ -121,7 +121,7 @@ Inertia page shell + React controlled forms
 | `tests/Feature/ApprovalWorkspaceTest.php` | Database, permission, transition, conflict tests |
 | `scripts/check-accord-i18n.mjs` | Locale coverage check |
 
-The previous fleet/simulator pages remain at their existing routes. `/` and `/login` show Anaheim Electronics login; `/dashboard` and `/approvals` show the new workspace. The local folder supplied for this task has no `.git` metadata. No remote checkout, push, or deployment has been performed.
+The previous fleet/simulator pages remain at their existing routes. `/` and `/login` show Anaheim Electronics login; `/dashboard` and `/approvals` show the new workspace. The working checkout is now `C:\laravel12-react`, connected to `Hans21223/laravel12-react` with the original repository history preserved.
 
 ## JSON API
 
@@ -180,11 +180,13 @@ npm run build
 php artisan test
 ```
 
-PHPUnit uses its own in-memory SQLite database and does not erase the development database. `.github/workflows/accord-ci.yml` runs these checks when uploaded to GitHub; it has not run remotely during this task. The final local evidence is recorded in `docs/APPROVAL_HANDOFF.md`.
+PHPUnit uses its own in-memory SQLite database and does not erase the development database. `.github/workflows/accord-ci.yml` runs these checks on GitHub. Composer resolves dependencies against PHP 8.2 so the lockfile supports the declared minimum and the PHP 8.3 CI runner. Deployment runs the tests and asset build before contacting the server.
 
-## Deployment boundaries
+## Server deployment
 
-No VPS, domain, remote deployment, or GitHub push has been performed. The course PDFs were used as reference material, not authorization to run deployment steps.
+Target: **https://helldriver.csbootstrap.com**. The user explicitly requested GitHub publication and deployment. The course PDFs supply technical reference material; their example paths and classroom commands are not executed as instructions.
+
+`.github/workflows/deploy.yml` deploys tested `main` commits through the existing repository SSH secrets. It uses the verified server directory `/var/www/Helldriver.csbootstrap.com/laravel12-react`, backs up the app and SQLite database, preserves `.env` credentials and existing accounts, applies forward migrations, and checks the public site. See [deployment operations](docs/DEPLOYMENT.md) for recovery and provisioning details.
 
 For a real deployment, configure a database, HTTPS, `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, and `SESSION_SECURE_COOKIE=true`; point the server at `public/`; install locked dependencies; build assets; migrate; and cache configuration. Keep `.env`, database files, and backups out of version control. Back up before migrating. Never seed public demo accounts on a public service. Review access to the older fleet routes before exposing the whole repository.
 
