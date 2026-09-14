@@ -451,7 +451,10 @@ export function RequestDetail({
                     </div>
                     <div className="detail-people">
                         <div>
-                            <Avatar name={item.owner?.name} />
+                            <Avatar
+                                src={item.owner?.avatar_url}
+                                name={item.owner?.name}
+                            />
                             <span>
                                 <small>{t('owner')}</small>
                                 <strong>{item.owner?.name}</strong>

@@ -10,6 +10,14 @@ const dictionaries = vm.runInNewContext(
 );
 const keys = Object.keys(dictionaries.en);
 const failures = [];
+for (const locale of ['en', 'th', 'ja']) {
+    const body = source.split(`const ${locale} = {`)[1].split('\n};')[0];
+    const seen = new Set();
+    for (const match of body.matchAll(/^    (\w+):/gm)) {
+        if (seen.has(match[1])) failures.push(`${locale}: duplicate ${match[1]}`);
+        seen.add(match[1]);
+    }
+}
 for (const [locale, dictionary] of Object.entries(dictionaries)) {
     for (const key of keys)
         if (typeof dictionary[key] !== 'string' || !dictionary[key].trim())

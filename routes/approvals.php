@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ApprovalController;
+use App\Http\Controllers\Api\ProfileSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,6 +14,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/notifications', [ApprovalController::class, 'notifications']);
         Route::patch('/notifications/read', [ApprovalController::class, 'readNotifications']);
         Route::patch('/preferences', [ApprovalController::class, 'preferences']);
+        Route::post('/profile-photo', [ProfileSettingsController::class, 'upload'])->middleware('throttle:20,1');
+        Route::delete('/profile-photo', [ProfileSettingsController::class, 'remove']);
+        Route::get('/avatars/{user}', [ProfileSettingsController::class, 'show'])->whereNumber('user');
+        Route::put('/password', [ProfileSettingsController::class, 'password'])->middleware('throttle:6,1');
         Route::get('/', [ApprovalController::class, 'index']);
         Route::post('/', [ApprovalController::class, 'store'])->middleware('throttle:60,1');
         Route::get('/{approval}', [ApprovalController::class, 'show'])->whereNumber('approval');

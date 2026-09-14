@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useLocale } from './i18n';
 
 const paths = {
+    camera: 'M8 5 10 2h4l2 3h5v16H3V5z M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+    monitor: 'M2 3h20v14H2z M8 21h8 M12 17v4',
     grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
     layers: 'm12 3 10 5-10 5L2 8z M2 12l10 5 10-5 M2 16l10 5 10-5',
     file: 'M14 2H5a1 1 0 0 0-1 1v18h16V8z M14 2v6h6 M8 12h8 M8 16h5',
@@ -185,18 +187,24 @@ export function Priority({ value }) {
         </span>
     );
 }
-export function Avatar({ name = '', small = false }) {
+export function Avatar({ name = '', small = false, src }) {
+    const [failed, setFailed] = useState(false);
+    useEffect(() => setFailed(false), [src]);
     return (
         <span
             className={`avatar ${small ? 'small' : ''} tone-${name.length % 4}`}
         >
-            {name
-                .trim()
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((s) => s[0])
-                .join('')
-                .toUpperCase()}
+            {src && !failed ? (
+                <img src={src} alt="" onError={() => setFailed(true)} />
+            ) : (
+                name
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((s) => s[0])
+                    .join('')
+                    .toUpperCase()
+            )}
         </span>
     );
 }

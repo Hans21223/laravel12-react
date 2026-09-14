@@ -19,9 +19,12 @@ for attempt in range(3):
         page = json.loads(html.unescape(match.group(1)))
         assert page['component'] == 'Approvals/Auth', 'Wrong application at public URL'
         manifest = json.loads(Path('public/build/manifest.json').read_text())
+        files = set()
         for entry in ['resources/js/app.jsx', 'resources/js/Pages/Approvals/Auth.jsx',
-                      'resources/js/Pages/Approvals/Workspace.jsx']:
-            file = manifest[entry]['file']
+                      'resources/js/Pages/Approvals/Workspace.jsx', 'resources/js/Pages/Approvals/Settings.jsx']:
+            files.add(manifest[entry]['file'])
+            files.update(manifest[entry].get('css', []))
+        for file in sorted(files):
             with urllib.request.urlopen(base + '/build/' + file, timeout=20) as response:
                 deployed = response.read()
             expected = Path('public/build', file).read_bytes()

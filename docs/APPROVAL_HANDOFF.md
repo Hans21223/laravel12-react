@@ -1,6 +1,6 @@
 # Approval workspace handoff
 
-Application completed locally on 14 September 2026. The working checkout is now `C:\laravel12-react`; the user subsequently authorized GitHub publication and VPS deployment.
+Application completed locally on 14 September 2026, with profile and account settings added on 15 September. The working checkout is now `C:\laravel12-react`; the user subsequently authorized GitHub publication and VPS deployment.
 
 ## Delivered
 
@@ -12,7 +12,7 @@ The latest theme is Anaheim Electronics: an original AE vector monogram, navy/wh
 
 ## Verification
 
-- `php artisan test`: **76 passed, 341 assertions**, including 16 approval feature tests.
+- `php artisan test`: **80 passed, 375 assertions**, including 16 approval and 4 profile/settings feature tests.
 - `npm run check:i18n`: passed for all three languages and static translation references.
 - `npm run build`: passed after the final mobile CSS fix (1,019 modules).
 - Browser: manager login, approval decision and history, employee notification, form validation, persistent draft creation/edit/submission, language switching, list/board navigation, light/dark appearance, and responsive navigation checked.
@@ -20,6 +20,12 @@ The latest theme is Anaheim Electronics: an original AE vector monogram, navy/wh
 - No warning/error console entries during the final browser check.
 
 The application has also been deployed to https://helldriver.csbootstrap.com. Live HTTPS checks verified manager login and role, summary and notification APIs, and create/read/update/soft-delete against the server SQLite database. The disposable verification draft is soft-deleted, with its audit retained. The pipeline checks that the served application bundles exactly match the tested build.
+
+## Profile and settings update
+
+The top-right avatar opens an accessible account dropdown. Settings now support profile photo preview/upload/removal, system appearance, display density, request page size, preferred list/board view, reduced motion, and password changes. All labels are provided in English, Thai, and Japanese (287 keys each). Saved appearance and interface language take precedence over older browser preferences after sign-in.
+
+Uploaded photos are validated on the server and stored on the private local disk under `storage/app/private/avatars`. The authenticated image route sends a MIME type and `nosniff`; generated avatar URLs change after replacement to avoid stale caches. The deployment leaves this storage directory in place. No public storage symlink is required.
 
 ## Live access
 

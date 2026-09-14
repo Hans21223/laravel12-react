@@ -245,10 +245,29 @@ class ApprovalController extends Controller
 
     public function preferences(Request $request)
     {
-        $data = $request->validate(['name' => 'required|string|max:100', 'department' => ['required', Rule::in(['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'])], 'locale' => ['required', Rule::in(['en', 'th', 'ja'])]]);
+        $data = $request->validate([
+            'name' => 'required|string|max:100',
+            'department' => ['required', Rule::in(['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'])],
+            'locale' => ['required', Rule::in(['en', 'th', 'ja'])],
+            'preferences' => 'sometimes|array:theme,density,page_size,default_view,reduce_motion',
+            'preferences.theme' => ['sometimes', Rule::in(['light', 'dark', 'system'])],
+            'preferences.density' => ['sometimes', Rule::in(['comfortable', 'compact'])],
+            'preferences.page_size' => ['sometimes', 'integer', Rule::in([8, 16, 24])],
+            'preferences.default_view' => ['sometimes', Rule::in(['list', 'board'])],
+            'preferences.reduce_motion' => 'sometimes|boolean',
+        ]);
+        if (isset($data['preferences'])) {
+            if (array_key_exists('page_size', $data['preferences'])) {
+                $data['preferences']['page_size'] = (int) $data['preferences']['page_size'];
+            }
+            if (array_key_exists('reduce_motion', $data['preferences'])) {
+                $data['preferences']['reduce_motion'] = (bool) $data['preferences']['reduce_motion'];
+            }
+            $data['preferences'] = array_replace($request->user()->preferences ?? [], $data['preferences']);
+        }
         $request->user()->forceFill($data)->save();
 
-        return $request->user()->only('id', 'name', 'email', 'role', 'department', 'locale');
+        return $request->user()->fresh()->settingsPayload();
     }
 
     public function export(Request $request)

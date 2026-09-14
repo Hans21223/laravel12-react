@@ -222,7 +222,11 @@ export function RequestTable({ rows, onOpen, compact = false }) {
                             </td>
                             <td>
                                 <div className="person-cell">
-                                    <Avatar name={item.owner?.name} small />
+                                    <Avatar
+                                        src={item.owner?.avatar_url}
+                                        name={item.owner?.name}
+                                        small
+                                    />
                                     <div>
                                         <strong>{item.owner?.name}</strong>
                                         <small>

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
+import Settings, { defaultPreferences } from './Settings';
 import { Head, router, usePage } from '@inertiajs/react';
 import { LocaleProvider, useLocale } from './i18n';
 import {
@@ -18,6 +20,7 @@ import Dashboard, { Charts, RequestTable } from './Dashboard';
 import { errorText, RequestDetail, RequestForm } from './RequestDialogs';
 import '../../../css/accord.css';
 import '../../../css/anaheim.css';
+import '../../../css/settings.css';
 
 const views = [
     'overview',
@@ -49,7 +52,10 @@ function WorkspaceContent({ initialUser }) {
     const [user, setUser] = useState(initialUser),
         [view, setView] = useState(initialView),
         [theme, setTheme] = useState(
-            () => localStorage.getItem('accord.theme') || 'light',
+            () =>
+                initialUser.preferences?.theme ||
+                localStorage.getItem('accord.theme') ||
+                'light',
         ),
         [mobile, setMobile] = useState(false);
     const [summary, setSummary] = useState(null),
@@ -67,7 +73,31 @@ function WorkspaceContent({ initialUser }) {
         [priority, setPriority] = useState(''),
         [sort, setSort] = useState('newest'),
         [page, setPage] = useState(1),
-        [display, setDisplay] = useState('list');
+        [display, setDisplay] = useState(
+            initialUser.preferences?.default_view || 'list',
+        );
+    const preferences = { ...defaultPreferences, ...user.preferences };
+    const [systemDark, setSystemDark] = useState(
+        () => window.matchMedia('(prefers-color-scheme: dark)').matches,
+    );
+    const resolvedTheme =
+        theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
+    useEffect(() => {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const changed = (event) => setSystemDark(event.matches);
+        media.addEventListener('change', changed);
+        return () => media.removeEventListener('change', changed);
+    }, []);
+    useEffect(() => {
+        setDisplay(preferences.default_view);
+        setPage(1);
+    }, [preferences.default_view, preferences.page_size]);
+    useEffect(() => {
+        document.documentElement.dataset.reduceMotion = String(
+            preferences.reduce_motion,
+        );
+        return () => delete document.documentElement.dataset.reduceMotion;
+    }, [preferences.reduce_motion]);
     const [loading, setLoading] = useState(true),
         [listLoading, setListLoading] = useState(false),
         [error, setError] = useState(null),
@@ -102,9 +132,9 @@ function WorkspaceContent({ initialUser }) {
     }, [search]);
     useEffect(() => {
         localStorage.setItem('accord.theme', theme);
-        document.documentElement.dataset.accordTheme = theme;
+        document.documentElement.dataset.accordTheme = resolvedTheme;
         return () => delete document.documentElement.dataset.accordTheme;
-    }, [theme]);
+    }, [theme, resolvedTheme]);
     const navigate = useCallback((next) => {
         setView(next);
         setMobile(false);
@@ -115,7 +145,13 @@ function WorkspaceContent({ initialUser }) {
         setSearch('');
         setDebounced('');
         history.pushState({}, '', `/approvals?view=${next}`);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({
+            top: 0,
+            behavior:
+                document.documentElement.dataset.reduceMotion === 'true'
+                    ? 'instant'
+                    : 'smooth',
+        });
     }, []);
     useEffect(() => {
         const pop = () => {
@@ -138,6 +174,7 @@ function WorkspaceContent({ initialUser }) {
                 !['INPUT', 'TEXTAREA', 'SELECT'].includes(
                     document.activeElement?.tagName,
                 ) &&
+                !document.activeElement?.closest('[role="menu"]') &&
                 !detail &&
                 !form &&
                 !searchModal
@@ -195,7 +232,7 @@ function WorkspaceContent({ initialUser }) {
         priority: priority || undefined,
         sort,
         page,
-        per_page: 8,
+        per_page: preferences.page_size,
         scope: view === 'mine' ? 'mine' : view === 'review' ? 'review' : 'all',
     };
     useEffect(() => {
@@ -229,7 +266,17 @@ function WorkspaceContent({ initialUser }) {
             controller.abort();
             clearInterval(timer);
         };
-    }, [view, debounced, status, type, priority, sort, page, refresh]);
+    }, [
+        view,
+        debounced,
+        status,
+        type,
+        priority,
+        sort,
+        page,
+        refresh,
+        preferences.page_size,
+    ]);
     const reload = () => setRefresh((r) => r + 1);
     async function open(id) {
         const sequence = ++openSequence.current;
@@ -372,7 +419,7 @@ function WorkspaceContent({ initialUser }) {
                     className="sidebar-profile"
                     onClick={() => navigate('settings')}
                 >
-                    <Avatar name={user.name} />
+                    <Avatar name={user.name} src={user.avatar_url} />
                     <span>
                         <strong>{user.name}</strong>
                         <small>{t(user.role)}</small>
@@ -383,7 +430,11 @@ function WorkspaceContent({ initialUser }) {
         </>
     );
     return (
-        <div className="accord workspace-shell" data-theme={theme}>
+        <div
+            className="accord workspace-shell"
+            data-theme={resolvedTheme}
+            data-density={preferences.density}
+        >
             <Head title={t(view)} />
             <aside className="sidebar">{nav}</aside>
             {mobile && (
@@ -428,7 +479,52 @@ function WorkspaceContent({ initialUser }) {
                             {notifications.unread > 0 && <i />}
                         </button>
                         <span className="topbar-divider" />
-                        <Avatar name={user.name} small />
+                        <Menu as="div" className="account-menu">
+                            <MenuButton
+                                className="account-menu-trigger"
+                                aria-label={t('accountMenu')}
+                            >
+                                <Avatar
+                                    name={user.name}
+                                    src={user.avatar_url}
+                                    small
+                                />
+                                <Icon name="down" size={12} />
+                            </MenuButton>
+                            <MenuItems className="account-menu-items">
+                                <div className="account-menu-identity">
+                                    <strong>{user.name}</strong>
+                                    <small>{user.email}</small>
+                                    <span>{t(user.role)}</span>
+                                </div>
+                                <MenuItem>
+                                    <button
+                                        onClick={() => navigate('settings')}
+                                    >
+                                        <Icon name="settings" size={17} />
+                                        {t('profileAndSettings')}
+                                    </button>
+                                </MenuItem>
+                                <MenuItem>
+                                    <button
+                                        onClick={() =>
+                                            navigate('notifications')
+                                        }
+                                    >
+                                        <Icon name="bell" size={17} />
+                                        {t('notifications')}
+                                    </button>
+                                </MenuItem>
+                                <MenuItem>
+                                    <button
+                                        onClick={() => router.post('/logout')}
+                                    >
+                                        <Icon name="logout" size={17} />
+                                        {t('logout')}
+                                    </button>
+                                </MenuItem>
+                            </MenuItems>
+                        </Menu>
                     </div>
                 </header>
                 <main className="workspace-content" id="main-content">
@@ -785,6 +881,11 @@ function WorkspaceContent({ initialUser }) {
                                                                                     />
                                                                                     <footer>
                                                                                         <Avatar
+                                                                                            src={
+                                                                                                r
+                                                                                                    .owner
+                                                                                                    ?.avatar_url
+                                                                                            }
                                                                                             name={
                                                                                                 r
                                                                                                     .owner
@@ -1182,146 +1283,6 @@ function WorkspaceContent({ initialUser }) {
     );
 }
 
-function Settings({ user, setUser, theme, setTheme, toast }) {
-    const { t, locale, setLocale } = useLocale();
-    const [name, setName] = useState(user.name),
-        [department, setDepartment] = useState(user.department),
-        [busy, setBusy] = useState(false);
-    async function save(e) {
-        e.preventDefault();
-        setBusy(true);
-        try {
-            const { data } = await axios.patch('/api/approvals/preferences', {
-                name,
-                department,
-                locale,
-            });
-            setUser(data);
-            toast(t('settingsSaved'));
-        } catch (error) {
-            toast(errorText(error, t), 'error');
-        } finally {
-            setBusy(false);
-        }
-    }
-    return (
-        <div className="settings-grid">
-            <form className="panel settings-card" onSubmit={save}>
-                <div className="panel-heading">
-                    <h3>{t('profile')}</h3>
-                    <Icon name="user" size={19} />
-                </div>
-                <div className="settings-body">
-                    <div className="settings-avatar">
-                        <Avatar name={name} />
-                        <div>
-                            <strong>{user.name}</strong>
-                            <small>{t(user.role)} · AE Operations</small>
-                        </div>
-                    </div>
-                    <Field label={t('fullName')}>
-                        <input
-                            required
-                            minLength={1}
-                            maxLength={100}
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </Field>
-                    <Field label={t('email')}>
-                        <input value={user.email} disabled type="email" />
-                    </Field>
-                    <Field label={t('department')}>
-                        <select
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                        >
-                            {[
-                                'Operations',
-                                'Engineering',
-                                'Design',
-                                'Finance',
-                                'People',
-                                'Marketing',
-                            ].map((d) => (
-                                <option key={d} value={d}>
-                                    {t(`dept${d}`)}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
-                    <Field label={t('language')}>
-                        <select
-                            value={locale}
-                            onChange={(e) => setLocale(e.target.value)}
-                        >
-                            <option value="en">English</option>
-                            <option value="th">ไทย</option>
-                            <option value="ja">日本語</option>
-                        </select>
-                    </Field>
-                    <button
-                        className="btn primary"
-                        disabled={busy || !name.trim()}
-                    >
-                        {t(busy ? 'working' : 'save')}
-                    </button>
-                </div>
-            </form>
-            <div>
-                <section className="panel settings-card">
-                    <div className="panel-heading">
-                        <h3>{t('appearance')}</h3>
-                        <Icon name="sun" size={19} />
-                    </div>
-                    <div className="theme-choices">
-                        {['light', 'dark'].map((mode) => (
-                            <button
-                                key={mode}
-                                onClick={() => setTheme(mode)}
-                                aria-pressed={theme === mode}
-                                className={theme === mode ? 'selected' : ''}
-                            >
-                                <div className={`theme-preview ${mode}`}>
-                                    <i />
-                                    <div>
-                                        <i />
-                                        <i />
-                                        <i />
-                                    </div>
-                                </div>
-                                <span>
-                                    <Icon
-                                        name={mode === 'light' ? 'sun' : 'moon'}
-                                        size={16}
-                                    />
-                                    {t(mode)}
-                                    {theme === mode && (
-                                        <Icon name="check" size={16} />
-                                    )}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </section>
-                <section className="panel settings-card account-role">
-                    <Icon name="shield" size={26} />
-                    <h3>
-                        {t('accountRole')}: {t(user.role)}
-                    </h3>
-                    <p>{t('roleHelp')}</p>
-                    <button
-                        className="btn secondary"
-                        onClick={() => router.post('/logout')}
-                    >
-                        <Icon name="logout" size={17} />
-                        {t('logout')}
-                    </button>
-                </section>
-            </div>
-        </div>
-    );
-}
 export default function Workspace() {
     const { auth } = usePage().props;
     return (

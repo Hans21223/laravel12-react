@@ -65,6 +65,9 @@ The interface uses an aerospace corporate identity: an original AE vector monogr
 - Database-derived counts, weekly submission/approval activity, request distribution, approved budget, and overdue counts.
 - EN / ไทย / 日本語; localized dates, numbers, and currency; remembered language and light/dark theme.
 - Responsive layouts, keyboard search (`Ctrl/⌘ K`), new-request shortcut (`N` outside inputs), accessible dialogs, reduced-motion support, validation, retry states, and unsaved-change confirmation.
+- Keyboard-accessible top-right account menu with Settings, notifications, and sign out.
+- Profile photo preview, upload, replacement, and removal (JPG/PNG/WebP, up to 2 MB and 4096 × 4096 pixels). Photos are served through authenticated routes and remain outside the public web directory.
+- Account preferences for light/dark/system appearance, comfortable/compact layouts, 8/16/24 requests per page, preferred list/board view, and reduced motion. Password changes require the current password and a confirmed new password of at least 12 characters.
 
 Notifications and dashboard/list data refresh every **15 seconds while the page is visible**, and after local mutations. This is polling, not WebSocket delivery. Details remain a snapshot while open; stale writes return 409 and require reopening the request. Comments load when opening the request or after posting a comment.
 
@@ -115,7 +118,8 @@ Inertia page shell + React controlled forms
 | `resources/js/Pages/Approvals/RequestDialogs.jsx` | Forms, details, decisions, discussion |
 | `resources/js/Pages/Approvals/Auth.jsx` | Login and registration |
 | `resources/js/Pages/Approvals/UI.jsx` | Shared components |
-| `resources/js/Pages/Approvals/i18n.jsx` | 258 keys per language and locale formatting |
+| `resources/js/Pages/Approvals/i18n.jsx` | 287 keys per language and locale formatting |
+| `resources/js/Pages/Approvals/Settings.jsx` | Profile photo, preferences, appearance, and password settings |
 | `resources/css/accord.css` | Responsive design system and themes |
 | `resources/css/anaheim.css` | Anaheim Electronics identity and schematic styling |
 | `tests/Feature/ApprovalWorkspaceTest.php` | Database, permission, transition, conflict tests |
@@ -141,6 +145,9 @@ Prefix: `/api/approvals`. Routes intentionally use Laravel's **web session and C
 | GET | `/notifications` | Latest 50 notifications and total unread count |
 | PATCH | `/notifications/read` | Mark one or all as read |
 | PATCH | `/preferences` | Own name, department, locale |
+| POST / DELETE | `/profile-photo` | Upload or remove the signed-in user's photo |
+| GET | `/avatars/{user}` | Authenticated profile photo response |
+| PUT | `/password` | Change own password with current-password verification |
 | GET | `/export` | CSV of all matching requests |
 
 Example create payload:

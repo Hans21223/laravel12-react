@@ -1,6 +1,38 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const en = {
+    accountMenu: 'Account menu',
+    profileAndSettings: 'Profile & settings',
+    profilePhoto: 'Profile photo',
+    choosePhoto: 'Choose photo',
+    uploadPhoto: 'Upload photo',
+    removePhoto: 'Remove photo',
+    photoSaved: 'Profile photo updated.',
+    photoRemoved: 'Profile photo removed.',
+    photoRules: 'JPG, PNG or WebP. Maximum 2 MB and 4096 × 4096 pixels.',
+    photoPreview: 'Preview only. Select Upload photo to save.',
+    system: 'System',
+    density: 'Display density',
+    comfortable: 'Comfortable',
+    compact: 'Compact',
+    reduceMotion: 'Reduce motion',
+    reduceMotionHelp: 'Minimize animations and smooth scrolling.',
+    requestPreferences: 'Request preferences',
+    rowsPerPage: 'Requests per page',
+    defaultView: 'Preferred request view',
+    preferencesHelp:
+        'Save to apply these preferences across your signed-in devices.',
+    securitySettings: 'Password & security',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    confirmNewPassword: 'Confirm new password',
+    updatePassword: 'Update password',
+    passwordChangeHint:
+        'Use at least 12 characters. Your current password is required.',
+    passwordSaved: 'Your password has been updated.',
+    currentPasswordError: 'Check your current password.',
+    newPasswordError:
+        'Use at least 12 characters and ensure both new passwords match.',
     workspace: 'Workspace',
     overview: 'Overview',
     requests: 'All requests',
@@ -275,6 +307,36 @@ const en = {
     openMenu: 'Open navigation',
 };
 const th = {
+    accountMenu: 'เมนูบัญชี',
+    profileAndSettings: 'โปรไฟล์และการตั้งค่า',
+    profilePhoto: 'รูปโปรไฟล์',
+    choosePhoto: 'เลือกรูปภาพ',
+    uploadPhoto: 'อัปโหลดรูปภาพ',
+    removePhoto: 'ลบรูปภาพ',
+    photoSaved: 'อัปเดตรูปโปรไฟล์แล้ว',
+    photoRemoved: 'ลบรูปโปรไฟล์แล้ว',
+    photoRules: 'JPG, PNG หรือ WebP ขนาดไม่เกิน 2 MB และ 4096 × 4096 พิกเซล',
+    photoPreview: 'นี่คือตัวอย่าง กดอัปโหลดรูปภาพเพื่อบันทึก',
+    system: 'ตามระบบ',
+    density: 'ความหนาแน่นของการแสดงผล',
+    comfortable: 'ระยะห่างปกติ',
+    compact: 'กระชับ',
+    reduceMotion: 'ลดภาพเคลื่อนไหว',
+    reduceMotionHelp: 'ลดแอนิเมชันและการเลื่อนแบบนุ่มนวล',
+    requestPreferences: 'การตั้งค่ารายการคำร้อง',
+    rowsPerPage: 'จำนวนคำร้องต่อหน้า',
+    defaultView: 'มุมมองคำร้องที่ต้องการ',
+    preferencesHelp: 'กดบันทึกเพื่อใช้การตั้งค่านี้บนอุปกรณ์ที่เข้าสู่ระบบ',
+    securitySettings: 'รหัสผ่านและความปลอดภัย',
+    currentPassword: 'รหัสผ่านปัจจุบัน',
+    newPassword: 'รหัสผ่านใหม่',
+    confirmNewPassword: 'ยืนยันรหัสผ่านใหม่',
+    updatePassword: 'เปลี่ยนรหัสผ่าน',
+    passwordChangeHint: 'ใช้รหัสผ่านอย่างน้อย 12 ตัวอักษร และระบุรหัสผ่านปัจจุบัน',
+    passwordSaved: 'เปลี่ยนรหัสผ่านแล้ว',
+    currentPasswordError: 'โปรดตรวจสอบรหัสผ่านปัจจุบัน',
+    newPasswordError:
+        'ใช้รหัสผ่านอย่างน้อย 12 ตัวอักษร และยืนยันรหัสผ่านให้ตรงกัน',
     workspace: 'พื้นที่ทำงาน',
     overview: 'ภาพรวม',
     requests: 'คำร้องทั้งหมด',
@@ -541,6 +603,36 @@ const th = {
     openMenu: 'เปิดเมนู',
 };
 const ja = {
+    accountMenu: 'アカウントメニュー',
+    profileAndSettings: 'プロフィールと設定',
+    profilePhoto: 'プロフィール写真',
+    choosePhoto: '写真を選択',
+    uploadPhoto: '写真をアップロード',
+    removePhoto: '写真を削除',
+    photoSaved: 'プロフィール写真を更新しました。',
+    photoRemoved: 'プロフィール写真を削除しました。',
+    photoRules: 'JPG、PNG、WebP。最大2 MB、4096 × 4096ピクセル。',
+    photoPreview: 'プレビューです。アップロードすると保存されます。',
+    system: 'システム',
+    density: '表示密度',
+    comfortable: '標準',
+    compact: 'コンパクト',
+    reduceMotion: '動きを減らす',
+    reduceMotionHelp: 'アニメーションとスムーズスクロールを抑えます。',
+    requestPreferences: '申請の表示設定',
+    rowsPerPage: '1ページの申請数',
+    defaultView: '優先する申請表示',
+    preferencesHelp: '保存すると、ログイン中の他の端末でも設定を利用できます。',
+    securitySettings: 'パスワードとセキュリティ',
+    currentPassword: '現在のパスワード',
+    newPassword: '新しいパスワード',
+    confirmNewPassword: '新しいパスワードの確認',
+    updatePassword: 'パスワードを更新',
+    passwordChangeHint: '12文字以上で設定してください。現在のパスワードが必要です。',
+    passwordSaved: 'パスワードを更新しました。',
+    currentPasswordError: '現在のパスワードを確認してください。',
+    newPasswordError:
+        '12文字以上で入力し、確認用パスワードと一致させてください。',
     workspace: 'ワークスペース',
     overview: '概要',
     requests: 'すべての申請',
@@ -809,9 +901,9 @@ const ja = {
 };
 export const dictionaries = { en, th, ja };
 const Context = createContext(null);
-export function LocaleProvider({ children, initial = 'en' }) {
+export function LocaleProvider({ children, initial }) {
     const [locale, setLocale] = useState(
-        () => localStorage.getItem('accord.locale') || initial,
+        () => initial || localStorage.getItem('accord.locale') || 'en',
     );
     const validLocale = dictionaries[locale] ? locale : 'en';
     useEffect(() => {
