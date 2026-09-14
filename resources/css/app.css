@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        @apply bg-zinc-950;
+        color-scheme: dark;
+    }
+
+    body {
+        @apply bg-zinc-950 text-zinc-200 antialiased;
+    }
+
+    /* แถบเลื่อนให้เข้ากับธีมมืด */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.zinc.700') transparent;
+    }
+
+    *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        @apply rounded-full bg-zinc-700;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        @apply bg-zinc-600;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    :focus-visible {
+        @apply outline-none ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-zinc-950;
+    }
+}
+
+@layer components {
+    /* พื้นหลังตารางกริดแบบจอเรดาร์ */
+    .bg-grid {
+        background-image:
+            linear-gradient(to right, theme('colors.zinc.800 / 60%') 1px, transparent 1px),
+            linear-gradient(to bottom, theme('colors.zinc.800 / 60%') 1px, transparent 1px);
+        background-size: 44px 44px;
+    }
+
+    .text-glow {
+        text-shadow: 0 0 12px currentColor;
+    }
+}
