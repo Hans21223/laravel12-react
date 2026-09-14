@@ -1,6 +1,6 @@
 # Approval workspace handoff
 
-Completed locally on 14 September 2026 in `C:\laravel12-react-main`.
+Application completed locally on 14 September 2026. The working checkout is now `C:\laravel12-react`; the user subsequently authorized GitHub publication and VPS deployment.
 
 ## Delivered
 
@@ -19,9 +19,19 @@ The latest theme is Anaheim Electronics: an original AE vector monogram, navy/wh
 - Japanese mobile dashboard checked at 390 × 844. Fixed an absolutely positioned screen-reader table label escaping its scroll container; document width now stays within the viewport while the wide table scrolls inside its panel.
 - No warning/error console entries during the final browser check.
 
-These checks cover the local SQLite application. External hosting and production infrastructure have not been validated.
+The application has also been deployed to https://helldriver.csbootstrap.com. Live HTTPS checks verified manager login and role, summary and notification APIs, and create/read/update/soft-delete against the server SQLite database. The disposable verification draft is soft-deleted, with its audit retained. The pipeline checks that the served application bundles exactly match the tested build.
 
-## Run and demonstrate
+## Live access
+
+Open https://helldriver.csbootstrap.com/login. The manager is `karn@accord.test`, as designated by the user. A new account was created with a separate random live password, saved privately on this computer in `storage/app/private/live-manager-access.json`; it is excluded from Git. Local demo passwords are not used on the public service.
+
+The original failed workflow used the nonexistent `laravel12-app` directory. The corrected path is `/var/www/Helldriver.csbootstrap.com/laravel12-react`. Deployment uses one SSH connection to avoid repeated connection timeouts, takes private backups, preserves the existing database and APP_KEY, sets production/HTTPS configuration, migrates, and caches the application.
+
+The first deployed Anaheim application commit was `59d809fd912cae40fbbe32cfdbb1c0675079cc0c`. Its pre-deployment snapshot is `/var/www/Helldriver.csbootstrap.com/.anaheim-backups/20260914T192346Z-59d809fd912c`. Each subsequent deployment logs its own snapshot and SHA. See [deployment operations](DEPLOYMENT.md).
+
+PHP dependencies now resolve against PHP 8.2 and pass PHP 8.3 CI. Compatible PHP and npm security patches were applied; both dependency audits reported zero vulnerabilities after the changes.
+
+## Run locally and demonstrate
 
 Open http://127.0.0.1:8000/approvals. A local PHP server was started on port 8000; if it stops, run:
 
@@ -41,4 +51,4 @@ The existing database was backed up to `storage/app/approval-before-20260914.sql
 
 Notifications refresh every 15 seconds while the page is visible. This version uses a single organization and one manager decision, document links rather than uploaded attachments, and THB budget amounts. It does not include email delivery or WebSockets. Open detail dialogs are snapshots; stale writes return a conflict and require reopening.
 
-The supplied local folder has no Git metadata. No remote push or deployment was performed. A CI workflow is included in `.github/workflows/accord-ci.yml`, but has only been prepared locally. Production requires environment configuration, migration, secure manager provisioning, and hosting setup as described in the README.
+The checkout is connected to `https://github.com/Hans21223/laravel12-react`, preserving both the original repository history and the locally completed app. CI runs in `.github/workflows/accord-ci.yml`; `.github/workflows/deploy.yml` tests and deploys pushes to `main`. Read the latest GitHub Actions result for the currently deployed commit.

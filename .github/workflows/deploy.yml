@@ -41,6 +41,4 @@ jobs:
           INITIAL_MANAGER_HASH: ${{ secrets.AE_INITIAL_MANAGER_HASH }}
         run: python3 scripts/deploy-transport.py
       - name: Verify the public application
-        run: |
-          curl --fail --silent --show-error --retry 3 https://helldriver.csbootstrap.com/up
-          curl --fail --silent --show-error https://helldriver.csbootstrap.com/ | grep -q 'Approvals/Auth'
+        run: python3 scripts/check-deployment.py
