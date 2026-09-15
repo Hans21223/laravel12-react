@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='anaheim-deploy-') as directory:
     key.chmod(0o600)
     bundle = work / 'build.tar.gz'
     with tarfile.open(bundle, 'w:gz') as archive:
-        for name in ['public/build', 'scripts/deploy-server.sh', 'scripts/deploy-database.php']:
+        for name in ['public/build', 'scripts/deploy-server.sh', 'scripts/deploy-database.php', 'scripts/configure-profile-uploads.py']:
             archive.add(name, arcname=name)
         secret = os.environ.get('INITIAL_MANAGER_HASH', '').encode()
         info = tarfile.TarInfo('initial-manager.hash')

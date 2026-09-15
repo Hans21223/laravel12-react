@@ -26,6 +26,7 @@ tar --exclude=./node_modules --exclude=./storage --exclude='*.sqlite' \
     -czf "$backup/application.tar.gz" .
 git rev-parse HEAD > "$backup/previous-commit.txt"
 umask 022
+python3 "$DEPLOY_STAGE/scripts/configure-profile-uploads.py"
 
 maintenance=0
 on_failure() {
