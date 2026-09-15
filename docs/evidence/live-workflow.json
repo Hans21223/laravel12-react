@@ -1,0 +1,28 @@
+{
+  "verified_at_utc": "2026-09-15T08:07:11.006808+00:00",
+  "site": "https://helldriver.csbootstrap.com",
+  "demonstration_request_id": 3,
+  "title": "DEMO / AE prototype development authorization",
+  "status": "approved",
+  "version": 7,
+  "stage_statuses": [
+    "approved",
+    "approved"
+  ],
+  "attachment_bytes": 1572981,
+  "attachment_sha256": "8dea09af0ab1dbf2eead63aaec45c5c6f7300ff78eb370b2698db388ecbb6be2",
+  "checks": [
+    "authenticated draft file download",
+    "manager cannot download private draft",
+    "other employee cannot download file",
+    "attachment delete removes API record",
+    "1.5 MB upload and reupload",
+    "submitted attachment deletion rejected",
+    "second reviewer acting first rejected",
+    "first approval leaves request pending",
+    "next reviewer notified",
+    "second approval completes request",
+    "owner notified",
+    "approved state persists in fresh login"
+  ]
+}

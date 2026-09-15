@@ -1,0 +1,23 @@
+name: Inspect database migration prerequisites
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            command -v mysql || true
+            command -v mysqldump || true
+            mysql --version || true
+            mysql --batch --skip-column-names -e 'SELECT VERSION();' || true
+            systemctl is-active mysql || true
+            php -r 'echo "PDO_MYSQL=".(extension_loaded("pdo_mysql") ? "yes" : "no").PHP_EOL;'
+            df -h /var/www

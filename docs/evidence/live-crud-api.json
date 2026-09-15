@@ -1,0 +1,50 @@
+{
+  "site": "https://helldriver.csbootstrap.com",
+  "checks": [
+    {
+      "operation": "CREATE",
+      "method": "POST",
+      "http_status": 201,
+      "row": {
+        "id": 2,
+        "title": "CRUD verification 2026-09-15 database demonstration",
+        "amount": "24680.50",
+        "status": "draft",
+        "version": 1,
+        "created_at": "2026-09-15T03:36:54.000000Z",
+        "updated_at": "2026-09-15T03:36:54.000000Z"
+      }
+    },
+    {
+      "operation": "READ",
+      "method": "GET",
+      "http_status": 200,
+      "fresh_login_session": true,
+      "row": {
+        "id": 2,
+        "title": "CRUD verification 2026-09-15 database demonstration",
+        "amount": "24680.50",
+        "status": "draft",
+        "version": 1,
+        "created_at": "2026-09-15T03:36:54.000000Z",
+        "updated_at": "2026-09-15T03:36:54.000000Z"
+      }
+    },
+    {
+      "operation": "UPDATE",
+      "method": "PUT",
+      "http_status": 200,
+      "fresh_login_read_confirmed": true,
+      "row": {
+        "id": 2,
+        "title": "CRUD verification 2026-09-15 UPDATED database demonstration",
+        "amount": "31415.90",
+        "status": "draft",
+        "version": 2,
+        "created_at": "2026-09-15T03:36:54.000000Z",
+        "updated_at": "2026-09-15T08:07:46.000000Z"
+      }
+    }
+  ],
+  "last_verified_at_utc": "2026-09-15T08:07:50.285959+00:00"
+}
