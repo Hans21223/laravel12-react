@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApprovalNotification;
 use App\Models\ApprovalRequest;
 use App\Models\User;
+use App\Services\ApprovalRouting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -22,7 +23,7 @@ class ApprovalController extends Controller
             'sort' => ['nullable', Rule::in(['newest', 'oldest', 'due', 'amount'])],
             'page' => 'nullable|integer|min:1', 'per_page' => 'nullable|integer|min:1|max:100',
         ]);
-        $q = ApprovalRequest::visibleTo($request->user())->with('owner', 'reviewer');
+        $q = ApprovalRequest::visibleTo($request->user())->with('owner', 'reviewer', 'steps.reviewer')->withCount('attachments');
         foreach (['status', 'type', 'priority'] as $field) {
             if (! empty($data[$field])) {
                 $q->where($field, $data[$field]);
@@ -33,7 +34,7 @@ class ApprovalController extends Controller
         }
         if (($data['scope'] ?? '') === 'review') {
             abort_unless($request->user()->role === 'manager', 403);
-            $q->where('status', 'pending')->where('user_id', '!=', $request->user()->id);
+            $q->awaitingReviewer($request->user());
         }
         if (! empty($data['search'])) {
             $term = '%'.$data['search'].'%';
@@ -56,7 +57,13 @@ class ApprovalController extends Controller
 
     public function show(Request $request, int $approval)
     {
-        return ApprovalRequest::visibleTo($request->user())->with('owner', 'reviewer', 'events.actor')->findOrFail($approval);
+        return ApprovalRequest::visibleTo($request->user())->with('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments')->findOrFail($approval);
+    }
+
+    public function reviewers(Request $request)
+    {
+        return User::where('role', 'manager')->where('id', '!=', $request->user()->id)
+            ->orderBy('name')->get(['id', 'name', 'department', 'avatar_path']);
     }
 
     private function fields(Request $request): array
@@ -71,8 +78,11 @@ class ApprovalController extends Controller
             'due_date' => 'nullable|date_format:Y-m-d',
             'document_url' => 'exclude_unless:type,document|nullable|url:http,https|max:2048',
             'submit' => 'sometimes|boolean',
+            'route_mode' => ['sometimes', Rule::in(['standard', 'sequential'])],
+            'reviewer_ids' => 'exclude_unless:route_mode,sequential|required|array|list|min:2|max:4',
+            'reviewer_ids.*' => ['required', 'integer', 'distinct', Rule::exists('users', 'id')->where(fn ($q) => $q->where('role', 'manager')->where('id', '!=', $request->user()->id))],
         ]);
-        unset($data['submit']);
+        unset($data['submit'], $data['reviewer_ids']);
 
         return array_merge(['amount' => null, 'start_date' => null, 'end_date' => null, 'document_url' => null, 'due_date' => null], $data);
     }
@@ -95,15 +105,17 @@ class ApprovalController extends Controller
         $item = DB::transaction(function () use ($request, $data) {
             $submit = $request->boolean('submit');
             $item = ApprovalRequest::create([...$data, 'user_id' => $request->user()->id, 'department' => $request->user()->department, 'status' => $submit ? 'pending' : 'draft', 'submitted_at' => $submit ? now() : null]);
+            $item->refresh();
+            app(ApprovalRouting::class)->configure($item, $request);
             $this->event($item, $request->user(), $submit ? 'submitted' : 'created');
             if ($submit) {
-                $this->notify($item, 'submitted', User::where('role', 'manager')->where('id', '!=', $request->user()->id)->pluck('id')->all());
+                app(ApprovalRouting::class)->notifyReviewers($item);
             }
 
             return $item;
         });
 
-        return response()->json($item->refresh()->load('owner', 'reviewer', 'events.actor'), 201);
+        return response()->json($item->refresh()->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments'), 201);
     }
 
     // The version predicate also protects SQLite, where SELECT FOR UPDATE is not supported.
@@ -133,13 +145,15 @@ class ApprovalController extends Controller
             abort_unless(in_array($item->status, ['draft', 'pending', 'rejected']), 409, 'This request can no longer be edited.');
             $status = $request->boolean('submit') ? 'pending' : ($item->status === 'pending' ? 'pending' : 'draft');
             $resubmit = $status === 'pending' && $item->status !== 'pending';
+            $restart = $item->status === 'pending' && $item->route_mode === 'sequential';
             $this->change($item, $item->version, [...$data, 'status' => $status, 'reviewer_id' => null, 'decision_note' => null, 'decided_at' => null, 'submitted_at' => $status === 'pending' ? ($resubmit ? now() : $item->submitted_at) : null]);
-            $this->event($item, $request->user(), $resubmit ? 'submitted' : 'updated');
-            if ($resubmit) {
-                $this->notify($item, 'submitted', User::where('role', 'manager')->where('id', '!=', $item->user_id)->pluck('id')->all());
+            app(ApprovalRouting::class)->configure($item, $request);
+            $this->event($item, $request->user(), $resubmit ? 'submitted' : ($restart ? 'route_restarted' : 'updated'));
+            if ($status === 'pending') {
+                app(ApprovalRouting::class)->notifyReviewers($item);
             }
 
-            return $item->load('owner', 'reviewer', 'events.actor');
+            return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
         });
     }
 
@@ -150,6 +164,7 @@ class ApprovalController extends Controller
             abort_unless($item->user_id === $request->user()->id, 403);
             abort_if($item->status === 'approved', 409, 'Approved records are retained.');
             $this->change($item, $item->version, ['deleted_at' => now()]);
+            app(ApprovalRouting::class)->stop($item);
             $this->event($item, $request->user(), 'deleted');
         });
 
@@ -165,11 +180,32 @@ class ApprovalController extends Controller
             $item = $this->locked($request, $approval);
             abort_if($item->user_id === $request->user()->id, 403, 'You cannot review your own request.');
             abort_unless($item->status === 'pending', 409, 'Only pending requests can be reviewed.');
-            $this->change($item, $item->version, ['status' => $data['decision'], 'decision_note' => $data['note'] ?? null, 'reviewer_id' => $request->user()->id, 'decided_at' => now()]);
-            $this->event($item, $request->user(), $data['decision'], $data['note'] ?? null);
-            $this->notify($item, $data['decision'], [$item->user_id]);
+            $status = $data['decision'];
+            $step = null;
+            $next = null;
+            if ($item->route_mode === 'sequential') {
+                $step = $item->steps()->where('round', $item->approval_round)->where('status', 'pending')->first();
+                abort_unless($step && $step->reviewer_id === $request->user()->id, 403, 'It is another reviewer\'s turn.');
+                $next = $item->steps()->where('round', $item->approval_round)->where('position', '>', $step->position)->first();
+                if ($status === 'approved' && $next) {
+                    $status = 'pending';
+                }
+            }
+            $this->change($item, $item->version, ['status' => $status, 'decision_note' => $status === 'pending' ? null : ($data['note'] ?? null), 'reviewer_id' => $status === 'pending' ? null : $request->user()->id, 'decided_at' => $status === 'pending' ? null : now()]);
+            if ($step) {
+                $step->update(['status' => $data['decision'], 'note' => $data['note'] ?? null, 'decided_at' => now()]);
+                if ($status === 'pending') {
+                    $next->update(['status' => 'pending']);
+                    app(ApprovalRouting::class)->notifyReviewers($item);
+                } elseif ($status === 'rejected') {
+                    app(ApprovalRouting::class)->stop($item);
+                }
+            }
+            $action = $status === 'pending' ? 'stage_approved' : $data['decision'];
+            $this->event($item, $request->user(), $action, $data['note'] ?? null);
+            $this->notify($item, $action, [$item->user_id]);
 
-            return $item->load('owner', 'reviewer', 'events.actor');
+            return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
         });
     }
 
@@ -180,9 +216,10 @@ class ApprovalController extends Controller
             abort_unless($item->user_id === $request->user()->id, 403);
             abort_unless($item->status === 'pending', 409);
             $this->change($item, $item->version, ['status' => 'cancelled']);
+            app(ApprovalRouting::class)->stop($item);
             $this->event($item, $request->user(), 'cancelled');
 
-            return $item->load('owner', 'reviewer', 'events.actor');
+            return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
         });
     }
 
@@ -197,7 +234,7 @@ class ApprovalController extends Controller
                 $this->notify($item, 'commented', [$item->user_id]);
             }
 
-            return $item->load('owner', 'reviewer', 'events.actor');
+            return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
         });
     }
 
@@ -222,9 +259,9 @@ class ApprovalController extends Controller
             'counts' => $counts, 'total' => $counts->sum(), 'weeks' => $weeks,
             'types' => (clone $base)->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type'),
             'overdue' => (clone $base)->where('status', 'pending')->whereDate('due_date', '<', today())->count(),
-            'review_count' => $request->user()->role === 'manager' ? (clone $base)->where('status', 'pending')->where('user_id', '!=', $request->user()->id)->count() : 0,
+            'review_count' => $request->user()->role === 'manager' ? (clone $base)->awaitingReviewer($request->user())->count() : 0,
             'approved_budget' => (clone $base)->where('status', 'approved')->where('type', 'budget')->sum('amount'),
-            'recent' => (clone $base)->with('owner', 'reviewer')->latest('updated_at')->limit(5)->get(),
+            'recent' => (clone $base)->with('owner', 'reviewer', 'steps.reviewer')->withCount('attachments')->latest('updated_at')->limit(5)->get(),
         ];
     }
 

@@ -1,0 +1,30 @@
+name: Provision dedicated demo reviewer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helldriver-production
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create the dedicated reviewer using an administrator-supplied password hash
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          AE_DEMO_REVIEWER_HASH: ${{ secrets.AE_DEMO_REVIEWER_HASH }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: AE_DEMO_REVIEWER_HASH
+          script: |
+            set -eu
+            cd /var/www/Helldriver.csbootstrap.com/laravel12-react
+            php artisan approvals:demo-reviewer

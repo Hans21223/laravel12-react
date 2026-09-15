@@ -18,9 +18,11 @@ import {
 } from './UI';
 import Dashboard, { Charts, RequestTable } from './Dashboard';
 import { errorText, RequestDetail, RequestForm } from './RequestDialogs';
+import { RouteSummary } from './Workflow';
 import '../../../css/accord.css';
 import '../../../css/anaheim.css';
 import '../../../css/settings.css';
+import '../../../css/workflow.css';
 
 const views = [
     'overview',
@@ -874,6 +876,11 @@ function WorkspaceContent({ initialUser }) {
                                                                                             r.title
                                                                                         }
                                                                                     </strong>
+                                                                                    <RouteSummary
+                                                                                        item={
+                                                                                            r
+                                                                                        }
+                                                                                    />
                                                                                     <Priority
                                                                                         value={
                                                                                             r.priority

@@ -1,0 +1,358 @@
+.route-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.route-option {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: 1px solid var(--line);
+    padding: 16px;
+    text-align: left;
+    background: var(--surface);
+    color: var(--ink);
+}
+.route-option > svg {
+    flex-shrink: 0;
+    color: var(--green);
+}
+.route-option > span {
+    flex: 1;
+}
+.route-option strong,
+.route-option small {
+    display: block;
+}
+.route-option small {
+    margin-top: 5px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+.route-option.selected {
+    background: var(--green-tint);
+    border-color: var(--green);
+    box-shadow: inset 0 3px var(--green);
+}
+.route-stages {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    background: var(--surface-alt);
+}
+.route-stage-input {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.route-stage-input .form-field {
+    flex: 1;
+    min-width: 0;
+}
+.route-number {
+    font:
+        600 13px ui-monospace,
+        monospace;
+    color: var(--green);
+    border: 1px solid var(--line);
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.route-warning {
+    color: var(--signal);
+    margin: 10px 0;
+}
+.approval-journey {
+    margin: 24px 0;
+    border: 1px solid var(--line);
+    background: var(--surface-alt);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.approval-journey > header {
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: var(--green-tint);
+}
+.approval-journey h3 {
+    margin: 5px 0 0;
+    font-size: 17px;
+    font-weight: 650;
+}
+.journey-counter {
+    font:
+        600 22px ui-monospace,
+        monospace;
+    color: var(--green);
+    white-space: nowrap;
+}
+.journey-progress {
+    height: 4px;
+    background: var(--line);
+}
+.journey-progress > span {
+    display: block;
+    height: 100%;
+    background: var(--green);
+    transition: width 0.5s ease;
+}
+.approval-journey ol {
+    list-style: none;
+    padding: 18px 20px 0;
+    margin: 0;
+}
+.journey-step {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 24px;
+}
+.journey-step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 26px;
+    bottom: 0;
+    border-left: 1px solid var(--line);
+}
+.journey-node {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    flex-shrink: 0;
+    font:
+        600 12px ui-monospace,
+        monospace;
+}
+.journey-step.approved .journey-node {
+    background: var(--green);
+    color: var(--surface);
+    border-color: var(--green);
+}
+.journey-step.pending .journey-node {
+    color: var(--signal);
+    border-color: var(--signal);
+    box-shadow: 0 0 0 4px #c6424c15;
+}
+.journey-step.rejected .journey-node {
+    background: var(--signal);
+    color: white;
+    border-color: var(--signal);
+}
+.journey-step.skipped,
+.journey-step.superseded {
+    opacity: 0.65;
+}
+.journey-person {
+    flex: 1;
+    min-width: 0;
+}
+.journey-person strong,
+.journey-person small {
+    display: block;
+}
+.journey-person small {
+    color: var(--muted);
+    margin-top: 3px;
+}
+.journey-person p {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-left: 2px solid var(--line);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.journey-caption {
+    margin: 0;
+    padding: 0 20px 16px;
+    font-size: 12px;
+    color: var(--muted);
+}
+.approval-journey > header + .journey-caption {
+    padding-top: 15px;
+}
+.previous-rounds {
+    border-top: 1px solid var(--line);
+    padding: 14px 20px;
+}
+.previous-rounds summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--green);
+}
+.previous-rounds h4 {
+    margin: 16px 0 0;
+    font-size: 12px;
+}
+.previous-rounds ol {
+    padding-left: 0;
+    padding-right: 0;
+}
+.request-attachments {
+    margin: 24px 0;
+}
+.request-attachments > header,
+.request-attachments h3,
+.request-attachments header small {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.request-attachments > header {
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.request-attachments h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 650;
+}
+.request-attachments h3 span {
+    padding: 2px 7px;
+    font-size: 11px;
+    border-radius: 3px;
+    background: var(--green-tint);
+    color: var(--green);
+}
+.request-attachments header small {
+    color: var(--muted);
+}
+.attachment-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+}
+.attachment-type {
+    padding: 10px 7px;
+    background: var(--green-tint);
+    color: var(--green);
+    font:
+        600 10px ui-monospace,
+        monospace;
+    flex-shrink: 0;
+}
+.attachment-row > div:first-of-type {
+    flex: 1;
+    min-width: 0;
+}
+.attachment-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-wrap: anywhere;
+    color: var(--green);
+    font-weight: 600;
+}
+.attachment-name svg {
+    flex-shrink: 0;
+}
+.attachment-name:hover {
+    text-decoration: underline;
+}
+.attachment-row small {
+    color: var(--muted);
+    display: block;
+    margin-top: 3px;
+}
+.attachment-confirm {
+    display: flex;
+    gap: 4px;
+}
+.attachment-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 7px;
+    cursor: pointer;
+    border: 1px dashed var(--green);
+    background: var(--surface-alt);
+    color: var(--green);
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.attachment-drop:hover,
+.attachment-drop:focus-within {
+    background: var(--green-tint);
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
+.attachment-drop small {
+    color: var(--muted);
+    text-align: center;
+}
+.attachment-drop.disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+.upload-status {
+    margin-top: 12px;
+    color: var(--muted);
+}
+.upload-status progress {
+    display: block;
+    width: 100%;
+    height: 6px;
+    margin-top: 8px;
+    accent-color: var(--green);
+}
+.route-summary,
+.route-summary > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.route-summary {
+    display: flex;
+    gap: 12px;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 10px;
+}
+.mini-route {
+    display: flex;
+    gap: 2px;
+    margin-left: 3px;
+}
+.mini-route i {
+    width: 12px;
+    height: 3px;
+    background: var(--line);
+}
+.mini-route i.approved {
+    background: var(--green);
+}
+.mini-route i.pending,
+.mini-route i.rejected {
+    background: var(--signal);
+}
+@media (max-width: 600px) {
+    .route-options {
+        grid-template-columns: 1fr;
+    }
+    .attachment-confirm {
+        flex-direction: column;
+    }
+    .journey-step {
+        gap: 8px;
+    }
+}

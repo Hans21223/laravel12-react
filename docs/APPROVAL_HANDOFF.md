@@ -6,15 +6,17 @@ Application completed locally on 14 September 2026, with profile and account set
 
 Laravel 12, React, Inertia, and Tailwind approval system with database-backed JSON CRUD. Employees create leave, budget, and document requests. Managers approve or reject other users' submitted requests; employees receive persistent in-app notifications.
 
-The workspace includes drafts, revision and resubmission, withdrawal, audit history, comments, optimistic concurrency checks, role and ownership enforcement, search, filtering, pagination, list/board views, CSV export, overview metrics, insights, preferences, and an in-app guide. English, Thai, and Japanese each contain 258 translation keys.
+The workspace includes drafts, revision and resubmission, withdrawal, audit history, comments, optimistic concurrency checks, role and ownership enforcement, search, filtering, pagination, list/board views, CSV export, overview metrics, insights, preferences, and an in-app guide. English, Thai, and Japanese each contain 329 translation keys.
+
+The September 15 workflow upgrade adds optional sequential approval by 2–4 named managers, stage progress, retained review rounds, and private request attachments. See [workflow details](WORKFLOW_UPGRADE.md). Laravel Breeze remains the authentication foundation beneath the custom React login and registration screens.
 
 The latest theme is Anaheim Electronics: an original AE vector monogram, navy/white surfaces, crimson accents, angular panels, and schematic illustrations. Login, registration, and the approval workspace support light/dark appearance and mobile layouts.
 
 ## Verification
 
-- `php artisan test`: **80 passed, 375 assertions**, including 16 approval and 4 profile/settings feature tests.
+- `php artisan test`: **88 passed, 499 assertions**, including sequential workflow, attachments, database evidence, and safe reviewer provisioning.
 - `npm run check:i18n`: passed for all three languages and static translation references.
-- `npm run build`: passed after the final mobile CSS fix (1,019 modules).
+- `npm run build`: passed with the workflow upgrade (1,023 modules).
 - Browser: manager login, approval decision and history, employee notification, form validation, persistent draft creation/edit/submission, language switching, list/board navigation, light/dark appearance, and responsive navigation checked.
 - Japanese mobile dashboard checked at 390 × 844. Fixed an absolutely positioned screen-reader table label escaping its scroll container; document width now stays within the viewport while the wide table scrolls inside its panel.
 - No warning/error console entries during the final browser check.

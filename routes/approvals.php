@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ApprovalAttachmentController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\ProfileSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,7 @@ Route::middleware('auth')->group(function () {
     // Same-origin JSON API: Laravel's web middleware supplies secure sessions and CSRF protection.
     Route::prefix('api/approvals')->name('api.approvals.')->group(function () {
         Route::get('/summary', [ApprovalController::class, 'summary']);
+        Route::get('/reviewers', [ApprovalController::class, 'reviewers']);
         Route::get('/export', [ApprovalController::class, 'export']);
         Route::get('/notifications', [ApprovalController::class, 'notifications']);
         Route::patch('/notifications/read', [ApprovalController::class, 'readNotifications']);
@@ -26,5 +28,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{approval}/decision', [ApprovalController::class, 'decision'])->whereNumber('approval');
         Route::post('/{approval}/cancel', [ApprovalController::class, 'cancel'])->whereNumber('approval');
         Route::post('/{approval}/comments', [ApprovalController::class, 'comment'])->whereNumber('approval')->middleware('throttle:60,1');
+        Route::post('/{approval}/attachments', [ApprovalAttachmentController::class, 'store'])->whereNumber('approval')->middleware('throttle:20,1');
+        Route::get('/{approval}/attachments/{attachment}', [ApprovalAttachmentController::class, 'show'])->whereNumber(['approval', 'attachment']);
+        Route::delete('/{approval}/attachments/{attachment}', [ApprovalAttachmentController::class, 'destroy'])->whereNumber(['approval', 'attachment']);
     });
 });

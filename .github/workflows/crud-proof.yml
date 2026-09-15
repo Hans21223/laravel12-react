@@ -1,0 +1,36 @@
+name: Read synthetic CRUD database evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: ID of a synthetic request whose title starts with CRUD verification
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helldriver-production
+  cancel-in-progress: false
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read only the requested synthetic row from production SQL
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          CRUD_PROOF_ID: ${{ inputs.request_id }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: CRUD_PROOF_ID
+          script: |
+            set -eu
+            case "$CRUD_PROOF_ID" in ''|*[!0-9]*) exit 1;; esac
+            cd /var/www/Helldriver.csbootstrap.com/laravel12-react
+            php artisan approvals:crud-proof "$CRUD_PROOF_ID"

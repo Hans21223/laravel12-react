@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useLocale } from './i18n';
 import { Avatar, Badge, Field, Icon, Modal, Priority, TypeIcon } from './UI';
+import {
+    ApprovalJourney,
+    RequestAttachments,
+    RouteBuilder,
+    canReviewRequest,
+    currentSteps,
+} from './Workflow';
 
 export function errorText(error, t) {
     return t(
@@ -25,6 +32,8 @@ const empty = {
     end_date: '',
     due_date: '',
     document_url: '',
+    route_mode: 'standard',
+    reviewer_ids: [],
 };
 export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
     const { t } = useLocale();
@@ -32,7 +41,12 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
         Object.fromEntries(
             Object.keys(empty).map((k) => [
                 k,
-                item?.[k] ?? (k === 'type' ? initialType || 'leave' : empty[k]),
+                k === 'reviewer_ids'
+                    ? item
+                        ? currentSteps(item).map((step) => step.reviewer_id)
+                        : []
+                    : (item?.[k] ??
+                      (k === 'type' ? initialType || 'leave' : empty[k])),
             ]),
         ),
     );
@@ -62,6 +76,13 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
     }, [dirty]);
     async function save(submit) {
         const errs = {};
+        if (
+            form.route_mode === 'sequential' &&
+            (form.reviewer_ids.length < 2 ||
+                form.reviewer_ids.some((id) => !id) ||
+                new Set(form.reviewer_ids).size !== form.reviewer_ids.length)
+        )
+            errs.reviewer_ids = t('reviewersError');
         if (form.title.trim().length < 3 || form.title.length > 180)
             errs.title = t('titleError');
         if (
@@ -139,6 +160,16 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                     ),
                 );
             toast(errorText(error, t), 'error');
+            if (
+                server &&
+                Object.keys(server).some((key) =>
+                    key.startsWith('reviewer_ids'),
+                )
+            )
+                setErrors((old) => ({
+                    ...old,
+                    reviewer_ids: t('reviewersError'),
+                }));
         } finally {
             setBusy(false);
         }
@@ -277,6 +308,22 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                 {input('due_date', 'date')}
                             </Field>
                         </div>
+                        <RouteBuilder
+                            form={form}
+                            change={change}
+                            busy={busy}
+                            error={errors.reviewer_ids}
+                        />
+                        {item?.status === 'pending' &&
+                            item?.route_mode === 'sequential' && (
+                                <p className="route-warning">
+                                    {t('restartWarning')}
+                                </p>
+                            )}
+                        <p className="form-note">
+                            <Icon name="file" size={15} />
+                            {t('attachAfterDraft')}
+                        </p>
                         <p className="form-note">
                             <Icon name="shield" size={15} />
                             {t('draftHelp')}
@@ -359,8 +406,7 @@ export function RequestDetail({
         [busy, setBusy] = useState(false),
         [noteError, setNoteError] = useState('');
     const own = item.user_id === user.id;
-    const canReview =
-        user.role === 'manager' && !own && item.status === 'pending';
+    const canReview = canReviewRequest(item, user);
     async function perform() {
         if (action === 'rejected' && !note.trim()) {
             setNoteError(t('rejectNote'));
@@ -517,6 +563,15 @@ export function RequestDetail({
                             </div>
                         )}
                     </div>
+                    <ApprovalJourney item={item} user={user} />
+                    <RequestAttachments
+                        item={item}
+                        user={user}
+                        onChange={onChange}
+                        toast={toast}
+                        busy={busy}
+                        setBusy={setBusy}
+                    />
                     {item.decision_note && (
                         <div className={`decision-note ${item.status}`}>
                             <Icon
@@ -656,7 +711,11 @@ export function RequestDetail({
                                         onClick={() => begin('approved')}
                                     >
                                         <Icon name="check" size={16} />
-                                        {t('approve')}
+                                        {t(
+                                            item.route_mode === 'sequential'
+                                                ? 'approveStage'
+                                                : 'approve',
+                                        )}
                                     </button>
                                 </>
                             )}
@@ -683,7 +742,9 @@ export function RequestDetail({
                                     ? 'deleteHelp'
                                     : action === 'cancel'
                                       ? 'withdrawHelp'
-                                      : 'decisionHelp',
+                                      : item.route_mode === 'sequential'
+                                        ? 'stageDecisionHelp'
+                                        : 'decisionHelp',
                             )}
                         </p>
                         {['approved', 'rejected'].includes(action) && (

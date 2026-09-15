@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocale } from './i18n';
+import { RouteSummary } from './Workflow';
 import {
     Avatar,
     Badge,
@@ -217,6 +218,7 @@ export function RequestTable({ rows, onOpen, compact = false }) {
                                             <span>·</span>
                                             {t(item.type)}
                                         </small>
+                                        <RouteSummary item={item} />
                                     </div>
                                 </div>
                             </td>

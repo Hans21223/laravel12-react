@@ -21,6 +21,7 @@ class ApprovalDemoSeeder extends Seeder
             ['Yuki Tanaka', 'yuki@accord.test', 'employee', 'Engineering'],
             ['Narin Srisuk', 'narin@accord.test', 'employee', 'Marketing'],
             ['Alex Morgan', 'alex@accord.test', 'employee', 'Finance'],
+            ['Finance Demo Reviewer', 'finance-reviewer@accord.test', 'manager', 'Finance'],
         ];
         $users = [];
         foreach ($people as [$name,$email,$role,$department]) {
