@@ -28,7 +28,7 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: cp .env.example .env && php artisan key:generate
-      - run: php artisan test --filter='OrganizationIsolationTest|MySqlTransferTest' --without-tty
+      - run: php artisan test --filter='OrganizationIsolationTest|MySqlTransferTest'
         env:
           AE_TEST_MYSQL: '1'
           MYSQL_TEST_PASSWORD: ci-only-database-password
