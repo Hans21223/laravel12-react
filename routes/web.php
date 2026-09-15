@@ -3,6 +3,7 @@
 use App\Http\Controllers\DroneController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SimulatorController;
+use App\Http\Middleware\UseOrganization;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -12,7 +13,7 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', fn () => auth()->check() ? redirect('/approvals') : Inertia::render('Approvals/Auth', ['mode'=>'login']))->name('home');
+Route::get('/', fn () => auth()->check() ? redirect('/approvals') : Inertia::render('Approvals/Auth', ['mode' => 'login']))->name('home');
 
 /*
 |--------------------------------------------------------------------------
@@ -51,7 +52,7 @@ Route::controller(SimulatorController::class)->group(function () {
 */
 
 Route::get('/dashboard', fn () => Inertia::render('Approvals/Workspace'))
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', UseOrganization::class])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -62,3 +63,4 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 require __DIR__.'/approvals.php';
+require __DIR__.'/organizations.php';

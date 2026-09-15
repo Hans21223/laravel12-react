@@ -39,6 +39,8 @@ trap on_failure ERR
 php artisan down --retry=30
 maintenance=1
 php "$DEPLOY_STAGE/scripts/deploy-database.php" backup
+tar -czf "$backup/private-files.tar.gz" storage/app
+chmod 600 "$backup/private-files.tar.gz"
 git -c core.fileMode=false merge --ff-only "$DEPLOY_SHA"
 
 # Preserve APP_KEY, database connection, and account credentials.
@@ -63,6 +65,11 @@ if test -f public/hot; then mv public/hot "$backup/vite-hot"; fi
 php artisan config:clear
 php artisan migrate --force
 php "$DEPLOY_STAGE/scripts/deploy-database.php" provision
+python3 scripts/install-tenant-provisioner.py
+python3 scripts/enable-mysql.py
+php artisan config:clear
+php scripts/migrate-organizations.php
+python3 scripts/configure-calls.py
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

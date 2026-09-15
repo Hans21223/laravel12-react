@@ -3,6 +3,11 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useLocale } from './i18n';
 
 const paths = {
+    database:
+        'M3 5c0-4 18-4 18 0s-18 4-18 0 M3 5v14c0 4 18 4 18 0V5 M3 12c0 4 18 4 18 0',
+    phone: 'M4 3h4l2 5-3 2c2 4 3 5 7 7l2-3 5 2v4c-9 5-22-8-17-17Z',
+    video: 'M2 5h13v14H2z m13 5 7-4v12l-7-4',
+    users: 'M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M3 21v-2a8 8 0 0 1 16 0v2 M18 3a4 4 0 0 1 0 8 M22 21v-2a7 7 0 0 0-3-6',
     camera: 'M8 5 10 2h4l2 3h5v16H3V5z M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
     monitor: 'M2 3h20v14H2z M8 21h8 M12 17v4',
     grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',

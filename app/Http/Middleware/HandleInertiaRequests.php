@@ -32,7 +32,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user()?->settingsPayload(),
+                'user' => fn () => $request->user()?->settingsPayload(),
             ],
             // ข้อความแจ้งเตือนหลังทำรายการ (แสดงเป็น Toast ฝั่ง React)
             'flash' => fn () => $request->session()->get('flash'),

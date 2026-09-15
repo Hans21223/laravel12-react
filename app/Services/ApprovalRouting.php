@@ -39,7 +39,7 @@ class ApprovalRouting
     {
         $ids = $item->route_mode === 'sequential'
             ? $item->steps()->where('round', $item->approval_round)->where('status', 'pending')->pluck('reviewer_id')
-            : User::where('role', 'manager')->where('id', '!=', $item->user_id)->pluck('id');
+            : User::organizationManagers()->where('id', '!=', $item->user_id)->pluck('id');
         foreach ($ids as $id) {
             ApprovalNotification::create(['user_id' => $id, 'approval_request_id' => $item->id, 'action' => 'submitted', 'title' => $item->title]);
         }

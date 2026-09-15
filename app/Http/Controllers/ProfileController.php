@@ -53,7 +53,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (ApprovalRequest::withTrashed()->where('user_id', $user->id)->exists()) {
+        if ((config('tenancy.enabled') && $user->memberships()->exists()) || (! config('tenancy.enabled') && ApprovalRequest::withTrashed()->where('user_id', $user->id)->exists())) {
             throw ValidationException::withMessages([
                 'password' => 'This account owns approval records and cannot be deleted. Contact your workspace administrator.',
             ]);

@@ -11,6 +11,7 @@ export const defaultPreferences = {
     page_size: 8,
     default_view: 'list',
     reduce_motion: false,
+    visual_debug: false,
 };
 
 function ProfilePhoto({ user, setUser, toast }) {
@@ -269,6 +270,23 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
     }
     const change = (key, value) =>
         setPreferences((current) => ({ ...current, [key]: value }));
+    async function restoreDefaults() {
+        setBusy(true);
+        try {
+            const { data } = await axios.post(
+                '/api/approvals/preferences/reset',
+            );
+            setPreferences({ ...defaultPreferences });
+            setUser((current) => ({ ...current, ...data }));
+            setTheme('light');
+            setLocale('en');
+            toast(t('settingsResetSuccess'));
+        } catch (error) {
+            toast(errorText(error, t), 'error');
+        } finally {
+            setBusy(false);
+        }
+    }
     return (
         <div className="settings-grid expanded-settings">
             <div>
@@ -455,6 +473,56 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
                             disabled={busy || !name.trim()}
                         >
                             {t(busy ? 'working' : 'save')}
+                        </button>
+                    </div>
+                </section>
+                {user.tenancy_enabled && (
+                    <section className="panel settings-card">
+                        <div className="panel-heading">
+                            <h3>{t('visualDebug')}</h3>
+                            <Icon name="monitor" size={19} />
+                        </div>
+                        <div className="settings-body">
+                            <label className="settings-toggle">
+                                <span>
+                                    <strong>{t('traceEnabled')}</strong>
+                                    <small>{t('enableDebugHelp')}</small>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.visual_debug}
+                                    onChange={(e) =>
+                                        change('visual_debug', e.target.checked)
+                                    }
+                                />
+                            </label>
+                            <button
+                                type="submit"
+                                form="profile-settings-form"
+                                className="btn primary"
+                                disabled={busy}
+                            >
+                                {t('save')}
+                            </button>
+                        </div>
+                    </section>
+                )}
+                <section className="panel settings-card">
+                    <div className="panel-heading">
+                        <h3>{t('resetSettings')}</h3>
+                        <Icon name="refresh" size={19} />
+                    </div>
+                    <div className="settings-body">
+                        <p className="settings-hint">
+                            {t('resetSettingsHelp')}
+                        </p>
+                        <button
+                            type="button"
+                            className="btn secondary"
+                            disabled={busy}
+                            onClick={restoreDefaults}
+                        >
+                            {t('restoreDefaults')}
                         </button>
                     </div>
                 </section>

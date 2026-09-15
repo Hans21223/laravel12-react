@@ -417,7 +417,7 @@ export function RequestAttachments({
                         </span>
                         <div>
                             <a
-                                href={`/api/approvals/${item.id}/attachments/${file.id}`}
+                            href={`/api/approvals/${item.id}/attachments/${file.id}${user.organization ? `?organization_id=${user.organization.id}` : ''}`}
                                 className="attachment-name"
                             >
                                 {file.original_name}

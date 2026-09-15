@@ -3,10 +3,11 @@
 use App\Http\Controllers\Api\ApprovalAttachmentController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\ProfileSettingsController;
+use App\Http\Middleware\UseOrganization;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', UseOrganization::class])->group(function () {
     Route::get('/approvals', fn () => Inertia::render('Approvals/Workspace'))->name('approvals');
     // Same-origin JSON API: Laravel's web middleware supplies secure sessions and CSRF protection.
     Route::prefix('api/approvals')->name('api.approvals.')->group(function () {
@@ -16,6 +17,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/notifications', [ApprovalController::class, 'notifications']);
         Route::patch('/notifications/read', [ApprovalController::class, 'readNotifications']);
         Route::patch('/preferences', [ApprovalController::class, 'preferences']);
+        Route::post('/preferences/reset', [ApprovalController::class, 'resetPreferences']);
         Route::post('/profile-photo', [ProfileSettingsController::class, 'upload'])->middleware('throttle:20,1');
         Route::delete('/profile-photo', [ProfileSettingsController::class, 'remove']);
         Route::get('/avatars/{user}', [ProfileSettingsController::class, 'show'])->whereNumber('user');

@@ -21,3 +21,8 @@ jobs:
             systemctl is-active mysql || true
             php -r 'echo "PDO_MYSQL=".(extension_loaded("pdo_mysql") ? "yes" : "no").PHP_EOL;'
             df -h /var/www
+            dpkg-query -W coturn 2>/dev/null || true
+            systemctl is-active coturn || true
+            ss -lunt | head -20
+            ufw status || true
+            ip -4 -brief address

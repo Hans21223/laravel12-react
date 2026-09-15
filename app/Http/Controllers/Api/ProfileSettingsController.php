@@ -54,6 +54,9 @@ class ProfileSettingsController extends Controller
 
     public function show(User $user)
     {
+        if (config('tenancy.enabled')) {
+            abort_unless(User::inOrganization()->whereKey($user->id)->exists(), 404);
+        }
         abort_unless($user->avatar_path && Storage::disk('local')->exists($user->avatar_path), 404);
 
         return Storage::disk('local')->response($user->avatar_path, null, [

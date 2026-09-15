@@ -8,6 +8,30 @@ permissions:
   contents: read
 
 jobs:
+  mysql-isolation:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-database-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pci-only-database-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, pdo_mysql
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: php artisan test --filter='OrganizationIsolationTest|MySqlTransferTest' --without-tty
+        env:
+          AE_TEST_MYSQL: '1'
+          MYSQL_TEST_PASSWORD: ci-only-database-password
   test-and-build:
     runs-on: ubuntu-latest
     steps:

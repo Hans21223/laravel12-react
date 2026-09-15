@@ -44,7 +44,15 @@
         "created_at": "2026-09-15T03:36:54.000000Z",
         "updated_at": "2026-09-15T08:07:46.000000Z"
       }
+    },
+    {
+      "operation": "DELETE",
+      "method": "DELETE",
+      "http_status": 204,
+      "id": 2,
+      "fresh_login_get_status": 404,
+      "mode": "soft delete; inspect deleted_at through the SQL proof workflow"
     }
   ],
-  "last_verified_at_utc": "2026-09-15T08:07:50.285959+00:00"
+  "last_verified_at_utc": "2026-09-15T08:11:43.112246+00:00"
 }

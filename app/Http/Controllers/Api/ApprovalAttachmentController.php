@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApprovalRequest;
+use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,7 @@ class ApprovalAttachmentController extends Controller
         $request->validate(['file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|extensions:pdf,jpg,jpeg,png,webp|max:2048']);
         $path = null;
         try {
-            return DB::transaction(function () use ($request, $approval, &$path) {
+            return app(TenantContext::class)->db()->transaction(function () use ($request, $approval, &$path) {
                 $item = $this->editable($request, $approval);
                 abort_if($item->attachments()->count() >= 5, 422, 'A request can have up to five files.');
                 $file = $request->file('file');
@@ -61,7 +62,7 @@ class ApprovalAttachmentController extends Controller
     public function destroy(Request $request, int $approval, int $attachment)
     {
         $path = null;
-        $result = DB::transaction(function () use ($request, $approval, $attachment, &$path) {
+        $result = app(TenantContext::class)->db()->transaction(function () use ($request, $approval, $attachment, &$path) {
             $item = $this->editable($request, $approval);
             $file = $item->attachments()->findOrFail($attachment);
             $path = $file->storage_path;

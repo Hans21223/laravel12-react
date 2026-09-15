@@ -7,9 +7,10 @@ use App\Models\ApprovalNotification;
 use App\Models\ApprovalRequest;
 use App\Models\User;
 use App\Services\ApprovalRouting;
+use App\Services\TenantContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ApprovalController extends Controller
 {
@@ -38,7 +39,8 @@ class ApprovalController extends Controller
         }
         if (! empty($data['search'])) {
             $term = '%'.$data['search'].'%';
-            $q->where(fn ($q) => $q->where('title', 'like', $term)->orWhere('description', 'like', $term)->orWhere('id', preg_replace('/^REQ-0*/i', '', $data['search']))->orWhereHas('owner', fn ($u) => $u->where('name', 'like', $term)));
+            $owners = User::inOrganization()->where('name', 'like', $term)->pluck('id');
+            $q->where(fn ($q) => $q->where('title', 'like', $term)->orWhere('description', 'like', $term)->orWhere('id', preg_replace('/^REQ-0*/i', '', $data['search']))->orWhereIn('user_id', $owners));
         }
         match ($data['sort'] ?? 'newest') {
             'oldest' => $q->orderBy('created_at'),
@@ -62,7 +64,7 @@ class ApprovalController extends Controller
 
     public function reviewers(Request $request)
     {
-        return User::where('role', 'manager')->where('id', '!=', $request->user()->id)
+        return User::organizationManagers()->where('id', '!=', $request->user()->id)
             ->orderBy('name')->get(['id', 'name', 'department', 'avatar_path']);
     }
 
@@ -80,9 +82,15 @@ class ApprovalController extends Controller
             'submit' => 'sometimes|boolean',
             'route_mode' => ['sometimes', Rule::in(['standard', 'sequential'])],
             'reviewer_ids' => 'exclude_unless:route_mode,sequential|required|array|list|min:2|max:4',
-            'reviewer_ids.*' => ['required', 'integer', 'distinct', Rule::exists('users', 'id')->where(fn ($q) => $q->where('role', 'manager')->where('id', '!=', $request->user()->id))],
+            'reviewer_ids.*' => ['required', 'integer', 'distinct', Rule::exists('users', 'id')->where(fn ($q) => $q->where('id', '!=', $request->user()->id))],
         ]);
         unset($data['submit'], $data['reviewer_ids']);
+        if (($data['route_mode'] ?? '') === 'sequential') {
+            $ids = $request->input('reviewer_ids');
+            if (User::organizationManagers()->whereIn('id', $ids)->count() !== count($ids)) {
+                throw ValidationException::withMessages(['reviewer_ids' => 'Choose active managers in this organization.']);
+            }
+        }
 
         return array_merge(['amount' => null, 'start_date' => null, 'end_date' => null, 'document_url' => null, 'due_date' => null], $data);
     }
@@ -102,7 +110,7 @@ class ApprovalController extends Controller
     public function store(Request $request)
     {
         $data = $this->fields($request);
-        $item = DB::transaction(function () use ($request, $data) {
+        $item = app(TenantContext::class)->db()->transaction(function () use ($request, $data) {
             $submit = $request->boolean('submit');
             $item = ApprovalRequest::create([...$data, 'user_id' => $request->user()->id, 'department' => $request->user()->department, 'status' => $submit ? 'pending' : 'draft', 'submitted_at' => $submit ? now() : null]);
             $item->refresh();
@@ -139,7 +147,7 @@ class ApprovalController extends Controller
     {
         $data = $this->fields($request);
 
-        return DB::transaction(function () use ($request, $approval, $data) {
+        return app(TenantContext::class)->db()->transaction(function () use ($request, $approval, $data) {
             $item = $this->locked($request, $approval);
             abort_unless($item->user_id === $request->user()->id, 403);
             abort_unless(in_array($item->status, ['draft', 'pending', 'rejected']), 409, 'This request can no longer be edited.');
@@ -159,7 +167,7 @@ class ApprovalController extends Controller
 
     public function destroy(Request $request, int $approval)
     {
-        DB::transaction(function () use ($request, $approval) {
+        app(TenantContext::class)->db()->transaction(function () use ($request, $approval) {
             $item = $this->locked($request, $approval);
             abort_unless($item->user_id === $request->user()->id, 403);
             abort_if($item->status === 'approved', 409, 'Approved records are retained.');
@@ -176,7 +184,7 @@ class ApprovalController extends Controller
         abort_unless($request->user()->role === 'manager', 403);
         $data = $request->validate(['decision' => ['required', Rule::in(['approved', 'rejected'])], 'note' => 'required_if:decision,rejected|nullable|string|max:2000']);
 
-        return DB::transaction(function () use ($request, $approval, $data) {
+        return app(TenantContext::class)->db()->transaction(function () use ($request, $approval, $data) {
             $item = $this->locked($request, $approval);
             abort_if($item->user_id === $request->user()->id, 403, 'You cannot review your own request.');
             abort_unless($item->status === 'pending', 409, 'Only pending requests can be reviewed.');
@@ -211,7 +219,7 @@ class ApprovalController extends Controller
 
     public function cancel(Request $request, int $approval)
     {
-        return DB::transaction(function () use ($request, $approval) {
+        return app(TenantContext::class)->db()->transaction(function () use ($request, $approval) {
             $item = $this->locked($request, $approval);
             abort_unless($item->user_id === $request->user()->id, 403);
             abort_unless($item->status === 'pending', 409);
@@ -227,7 +235,7 @@ class ApprovalController extends Controller
     {
         $data = $request->validate(['body' => 'required|string|min:1|max:2000']);
 
-        return DB::transaction(function () use ($request, $approval, $data) {
+        return app(TenantContext::class)->db()->transaction(function () use ($request, $approval, $data) {
             $item = ApprovalRequest::visibleTo($request->user())->lockForUpdate()->findOrFail($approval);
             $this->event($item, $request->user(), 'commented', $data['body']);
             if ($item->user_id !== $request->user()->id) {
@@ -286,12 +294,13 @@ class ApprovalController extends Controller
             'name' => 'required|string|max:100',
             'department' => ['required', Rule::in(['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'])],
             'locale' => ['required', Rule::in(['en', 'th', 'ja'])],
-            'preferences' => 'sometimes|array:theme,density,page_size,default_view,reduce_motion',
+            'preferences' => 'sometimes|array:theme,density,page_size,default_view,reduce_motion,visual_debug',
             'preferences.theme' => ['sometimes', Rule::in(['light', 'dark', 'system'])],
             'preferences.density' => ['sometimes', Rule::in(['comfortable', 'compact'])],
             'preferences.page_size' => ['sometimes', 'integer', Rule::in([8, 16, 24])],
             'preferences.default_view' => ['sometimes', Rule::in(['list', 'board'])],
             'preferences.reduce_motion' => 'sometimes|boolean',
+            'preferences.visual_debug' => 'sometimes|boolean',
         ]);
         if (isset($data['preferences'])) {
             if (array_key_exists('page_size', $data['preferences'])) {
@@ -300,9 +309,23 @@ class ApprovalController extends Controller
             if (array_key_exists('reduce_motion', $data['preferences'])) {
                 $data['preferences']['reduce_motion'] = (bool) $data['preferences']['reduce_motion'];
             }
+            if (array_key_exists('visual_debug', $data['preferences'])) {
+                $data['preferences']['visual_debug'] = (bool) $data['preferences']['visual_debug'];
+            }
             $data['preferences'] = array_replace($request->user()->preferences ?? [], $data['preferences']);
         }
         $request->user()->forceFill($data)->save();
+        $request->user()->activeMembership()?->update(['department' => $data['department']]);
+
+        return $request->user()->fresh()->settingsPayload();
+    }
+
+    public function resetPreferences(Request $request)
+    {
+        $request->user()->forceFill(['locale' => 'en', 'preferences' => [
+            'theme' => 'light', 'density' => 'comfortable', 'page_size' => 8,
+            'default_view' => 'list', 'reduce_motion' => false, 'visual_debug' => false,
+        ]])->save();
 
         return $request->user()->fresh()->settingsPayload();
     }

@@ -128,7 +128,7 @@ function AuthContent({ mode }) {
                                         form.setData('password', e.target.value)
                                     }
                                     required
-                                    minLength={signup ? 8 : undefined}
+                                    minLength={signup ? 12 : undefined}
                                     autoComplete={
                                         signup
                                             ? 'new-password'
@@ -161,7 +161,7 @@ function AuthContent({ mode }) {
                                         )
                                     }
                                     required
-                                    minLength={8}
+                                    minLength={12}
                                     autoComplete="new-password"
                                 />
                             </Field>

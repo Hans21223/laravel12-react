@@ -19,12 +19,26 @@ import {
 import Dashboard, { Charts, RequestTable } from './Dashboard';
 import { errorText, RequestDetail, RequestForm } from './RequestDialogs';
 import { RouteSummary } from './Workflow';
+import {
+    OrganizationSettings,
+    EmployeeDirectory,
+    DatabaseViewer,
+} from './OrganizationPanels';
+import Messages from './Messages';
+import VisualDebug, { useVisualTrace, CrudDemo } from './VisualDebug';
+import { useWorkspaceCalls } from './Calls';
 import '../../../css/accord.css';
 import '../../../css/anaheim.css';
 import '../../../css/settings.css';
 import '../../../css/workflow.css';
+import '../../../css/organization.css';
 
 const views = [
+    'organizations',
+    'employees',
+    'messages',
+    'database',
+    'debug',
     'overview',
     'requests',
     'mine',
@@ -35,6 +49,11 @@ const views = [
     'help',
 ];
 const navIcons = {
+    organizations: 'layers',
+    employees: 'users',
+    messages: 'comment',
+    database: 'database',
+    debug: 'monitor',
     overview: 'grid',
     requests: 'layers',
     mine: 'file',
@@ -50,6 +69,10 @@ const initialView = () => {
 };
 
 function WorkspaceContent({ initialUser }) {
+    if (initialUser.organization)
+        axios.defaults.headers.common['X-Organization-ID'] = String(
+            initialUser.organization.id,
+        );
     const { t, date, number, money, locale, setLocale } = useLocale();
     const [user, setUser] = useState(initialUser),
         [view, setView] = useState(initialView),
@@ -79,6 +102,7 @@ function WorkspaceContent({ initialUser }) {
             initialUser.preferences?.default_view || 'list',
         );
     const preferences = { ...defaultPreferences, ...user.preferences };
+    const [chatPeer, setChatPeer] = useState(null);
     const [systemDark, setSystemDark] = useState(
         () => window.matchMedia('(prefers-color-scheme: dark)').matches,
     );
@@ -124,6 +148,8 @@ function WorkspaceContent({ initialUser }) {
             ),
         );
     }, []);
+    const calls = useWorkspaceCalls(user, toast);
+    const traces = useVisualTrace(preferences.visual_debug);
     useEffect(() => () => timers.current.forEach(clearTimeout), []);
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -357,14 +383,24 @@ function WorkspaceContent({ initialUser }) {
                     <Icon name="close" />
                 </button>
             </div>
-            <div className="organization">
+            <button
+                type="button"
+                className="organization text-left"
+                onClick={() =>
+                    navigate(
+                        user.tenancy_enabled ? 'organizations' : 'settings',
+                    )
+                }
+            >
                 <span className="organization-mark">AE</span>
                 <div>
-                    <strong>AE Operations</strong>
+                    <strong>
+                        {user.organization?.name || 'AE Operations'}
+                    </strong>
                     <small>{t('team')}</small>
                 </div>
                 <span className="org-dot" />
-            </div>
+            </button>
             <p className="nav-label">{t('mainMenu')}</p>
             <nav>
                 {[
@@ -373,6 +409,7 @@ function WorkspaceContent({ initialUser }) {
                     'mine',
                     ...(user.role === 'manager' ? ['review'] : []),
                     'insights',
+                    ...(user.tenancy_enabled ? ['employees', 'messages'] : []),
                 ].map((key) => (
                     <button
                         key={key}
@@ -390,7 +427,18 @@ function WorkspaceContent({ initialUser }) {
             </nav>
             <p className="nav-label second-label">{t('tools')}</p>
             <nav>
-                {['notifications', 'settings', 'help'].map((key) => (
+                {[
+                    'notifications',
+                    ...(user.tenancy_enabled
+                        ? [
+                              'organizations',
+                              ...(user.role === 'manager' ? ['database'] : []),
+                              'debug',
+                          ]
+                        : []),
+                    'settings',
+                    'help',
+                ].map((key) => (
                     <button
                         key={key}
                         className={`nav-link ${view === key ? 'active' : ''}`}
@@ -1127,6 +1175,65 @@ function WorkspaceContent({ initialUser }) {
                                     </section>
                                 </>
                             )}
+                            {user.tenancy_enabled &&
+                                view === 'organizations' && (
+                                    <>
+                                        {heading(
+                                            'organizations',
+                                            'organizationIntro',
+                                        )}
+                                        <OrganizationSettings
+                                            user={user}
+                                            toast={toast}
+                                        />
+                                    </>
+                                )}
+                            {user.tenancy_enabled && view === 'employees' && (
+                                <>
+                                    {heading('employees', 'directoryIntro')}
+                                    <EmployeeDirectory
+                                        user={user}
+                                        toast={toast}
+                                        onMessage={(person) => {
+                                            setChatPeer(person);
+                                            navigate('messages');
+                                        }}
+                                    />
+                                </>
+                            )}
+                            {user.tenancy_enabled && view === 'messages' && (
+                                <>
+                                    {heading('messages', 'chatIntro')}
+                                    <Messages
+                                        user={user}
+                                        peer={chatPeer}
+                                        setPeer={setChatPeer}
+                                        onDirectory={() =>
+                                            navigate('employees')
+                                        }
+                                        onCall={calls.start}
+                                        callsAvailable={calls.available}
+                                        toast={toast}
+                                    />
+                                </>
+                            )}
+                            {user.tenancy_enabled && view === 'database' && (
+                                <>
+                                    {heading('database', 'databaseScopeHelp')}
+                                    <DatabaseViewer />
+                                </>
+                            )}
+                            {user.tenancy_enabled && view === 'debug' && (
+                                <>
+                                    {heading('debug', 'debugIntro')}
+                                    <CrudDemo />
+                                    <VisualDebug
+                                        enabled={preferences.visual_debug}
+                                        traces={traces}
+                                        onSettings={() => navigate('settings')}
+                                    />
+                                </>
+                            )}
                             {view === 'settings' && (
                                 <>
                                     {heading('settings', 'profileSub')}
@@ -1200,6 +1307,7 @@ function WorkspaceContent({ initialUser }) {
                     </footer>
                 </main>
             </div>
+            {calls.panel}
             {detail && !form && (
                 <RequestDetail
                     item={detail}
