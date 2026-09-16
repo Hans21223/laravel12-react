@@ -152,13 +152,14 @@ class OrganizationIsolationTest extends TestCase
         $id = $call['id'];
         $this->postJson('/api/team/calls', ['recipient_id' => $outsider->id, 'mode' => 'audio'])->assertConflict();
         $this->patchJson('/api/team/calls/'.$id, ['action' => 'accept'])->assertConflict();
-        $offer = ['type' => 'offer', 'payload' => ['sdp' => 'v=0 synthetic test SDP']];
+        $sdp = "v=0\r\ns=- synthetic test SDP\r\n";
+        $offer = ['type' => 'offer', 'payload' => ['sdp' => $sdp]];
         $this->postJson('/api/team/calls/'.$id.'/signals', $offer)->assertNoContent();
         $this->actor($outsider, $org)->getJson('/api/team/calls/'.$id)->assertNotFound();
         $this->patchJson('/api/team/calls/'.$id, ['action' => 'end'])->assertNotFound();
         $this->actor($peer, $org)->postJson('/api/team/calls/'.$id.'/signals', $offer)->assertForbidden();
         $this->patchJson('/api/team/calls/'.$id, ['action' => 'accept'])->assertOk()->assertJsonPath('status', 'accepted');
-        $this->getJson('/api/team/calls/'.$id)->assertOk()->assertJsonPath('signals.0.payload.sdp', 'v=0 synthetic test SDP');
+        $this->getJson('/api/team/calls/'.$id)->assertOk()->assertJsonPath('signals.0.payload.sdp', $sdp);
         $this->postJson('/api/team/calls/'.$id.'/signals', ['type' => 'answer', 'payload' => ['sdp' => 'v=0 synthetic answer']])->assertNoContent();
         $this->patchJson('/api/team/calls/'.$id, ['action' => 'end'])->assertOk();
         $this->actor($owner, $org)->postJson('/api/team/calls/'.$id.'/signals', $offer)->assertConflict();

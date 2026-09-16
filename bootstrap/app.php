@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(WorkspaceSecurity::class);
+        // WebRTC session descriptions must keep their trailing CRLF, or browsers cannot parse them.
+        $middleware->trimStrings(except: ['payload.sdp']);
         $middleware->web(append: [
             AuthenticateSession::class,
             HandleInertiaRequests::class,
