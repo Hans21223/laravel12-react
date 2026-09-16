@@ -171,6 +171,6 @@ Pushing `main` runs `.github/workflows/deploy.yml`: tests and build on GitHub, t
 
 ## Limits
 
-- Email delivery needs an SMTP provider in the server `.env`; until then password-reset and verification emails are written to the log.
+- Email is sent through the server's local mail transfer agent; without SPF/DKIM records for the domain some providers may file it as spam. Set SMTP credentials in `.env` for guaranteed delivery.
 - Calls need UDP access to the TURN relay; restrictive networks may block media.
 - Closing an organization keeps its database for administrator recovery; the app has no permanent purge.

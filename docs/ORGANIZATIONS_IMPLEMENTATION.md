@@ -19,3 +19,8 @@ Built and verified locally: tenant schema and routing, public onboarding and inv
 Deployed `676fd82` on 2026-09-16 (backup `.anaheim-backups/20260916T104615Z-676fd826bdbe`). Live verification: health and login page; manager lands in the migrated "Anaheim Electronics" organization; approval history preserved (demo request 3 still approved at version 7, attachment SHA-256 unchanged); database view reports MySQL; employee directory; TURN relay configured; invitation key created and revoked; employees are denied the database view; direct message delivered; a new public organization ("AE Live Verification Lab", owned by yuki@accord.test) received its own MySQL database with no shared data.
 
 The previously deployed workflow upgrade is commit `47a9cb4`. Its 88 tests / 499 assertions and live two-stage approval check passed. The public-organization change is developed on `feat/public-organizations` until it is ready to deploy.
+
+## Follow-up (2026-09-16)
+
+Added organization rename, ownership transfer, leave, close (legacy workspace protected), failed-setup retry/remove, stage reassignment, account deletion rules, Breeze password reset screens, Reverb realtime hints, and the Tailwind migration. Verified with 66 PHPUnit tests, screenshot comparison against the previous UI, and browser flows for each new feature.
+

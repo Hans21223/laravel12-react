@@ -72,6 +72,7 @@ php scripts/migrate-organizations.php
 python3 scripts/configure-calls.py
 # Realtime is an enhancement: polling keeps the app working if Reverb cannot be configured.
 python3 scripts/configure-realtime.py || echo 'REALTIME_SETUP_FAILED: continuing with polling'
+python3 scripts/configure-mail.py || echo 'MAIL_SETUP_FAILED: messages stay in the application log'
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
