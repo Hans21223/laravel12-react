@@ -206,8 +206,9 @@ export function useWorkspaceCalls(user, toast) {
                     }
                     after.current = signal.id;
                 }
-            } catch {
-                /* Temporary polling failures recover; media has its own connection state. */
+            } catch (error) {
+                if ([401, 403, 404, 409, 419].includes(error.response?.status)) cleanup();
+                /* Temporary network failures recover; revoked access stops media immediately. */
             } finally {
                 polling = false;
             }

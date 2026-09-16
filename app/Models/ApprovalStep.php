@@ -20,4 +20,9 @@ class ApprovalStep extends Model
     {
         return $this->belongsTo(User::class, 'reviewer_id')->select('id', 'name', 'department', 'avatar_path');
     }
+
+    public function request()
+    {
+        return $this->belongsTo(ApprovalRequest::class, 'approval_request_id');
+    }
 }

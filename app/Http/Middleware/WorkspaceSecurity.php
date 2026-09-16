@@ -9,6 +9,9 @@ class WorkspaceSecurity
 {
     public function handle(Request $request, Closure $next)
     {
+        if (!config('tenancy.enabled') && $request->is('organizations', 'api/organizations', 'api/organizations/*', 'api/organization/*', 'api/team/*')) {
+            abort(404);
+        }
         if (config('tenancy.enabled') && $request->is('drone-system', 'fleet', 'drones', 'drones/*', 'api/drones', 'api/drones/*', 'quiz4', 'smart-door', 'mini-rts')) {
             abort(404);
         }

@@ -253,12 +253,6 @@
     font-size: 11px;
     overflow-wrap: anywhere;
 }
-.database-note {
-    margin: 0;
-    border-top: 1px solid var(--line);
-    font-size: 12px;
-    color: var(--muted);
-}
 .database-tabs {
     display: flex;
     overflow-x: auto;

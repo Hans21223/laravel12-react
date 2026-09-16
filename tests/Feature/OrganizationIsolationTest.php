@@ -178,6 +178,22 @@ class OrganizationIsolationTest extends TestCase
         $this->getJson('/api/approvals')->assertOk()->assertJsonPath('total', 1);
     }
 
+    public function test_members_with_pending_assignments_cannot_be_demoted_or_suspended(): void
+    {
+        $owner = User::factory()->create();
+        $reviewer = User::factory()->create();
+        $employee = User::factory()->create();
+        $org = $this->organization($owner, 'Review Team');
+        $membership = OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $reviewer->id, 'role' => 'manager']);
+        OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $employee->id]);
+        $row = $this->actor($employee, $org)->postJson('/api/approvals', [...$this->requestData(), 'route_mode' => 'sequential', 'reviewer_ids' => [$reviewer->id, $owner->id]])->assertCreated()->json();
+        $url = '/api/organization/members/'.$membership->id;
+        $this->actor($owner, $org)->patchJson($url, ['role' => 'employee', 'suspended' => false])->assertConflict();
+        $this->patchJson($url, ['role' => 'manager', 'suspended' => true])->assertConflict();
+        $this->actor($reviewer, $org)->postJson('/api/approvals/'.$row['id'].'/decision', ['version' => $row['version'], 'decision' => 'approved'])->assertOk();
+        $this->actor($owner, $org)->patchJson($url, ['role' => 'employee', 'suspended' => false])->assertOk();
+    }
+
     public function test_revoked_and_expired_invites_are_rejected_and_owner_cannot_be_suspended(): void
     {
         $owner = User::factory()->create();

@@ -12,8 +12,10 @@ User-approved scope: public organization creation; joining existing organization
 - Managers can browse an allowlisted view of their own organization's business tables; passwords, keys, sessions, private messages, and connection secrets are excluded.
 - Direct messages and signaling are limited to active coworkers; media permissions are requested only on explicit call/accept actions. Calls need verified TURN connectivity.
 
-## Work remaining
+## Status
 
-Tenant schema and routing; public onboarding and invitation management; directory/messages/calls; database and debug views; MySQL provisioning/migration and backup support; tenant isolation and concurrency tests; browser validation; deployment and live verification.
+Built and verified locally: tenant schema and routing, public onboarding and invitation management, directory/messages/calls, database and debug views, MySQL provisioning/migration and backup support, tenant isolation and concurrency tests (95 tests / 574 assertions; the real MySQL transfer runs in CI), TypeScript 6 check without deprecation suppression, and a headless browser pass (registration, organization creation, directory, CRUD demo, database view, settings reset, mobile layout).
+
+Work remaining: merge to `main` to deploy, then live verification. Deployment migrates the live SQLite data to MySQL (with backups) and enables organizations.
 
 The previously deployed workflow upgrade is commit `47a9cb4`. Its 88 tests / 499 assertions and live two-stage approval check passed. The public-organization change is developed on `feat/public-organizations` until it is ready to deploy.

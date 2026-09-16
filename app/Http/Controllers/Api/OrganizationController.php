@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApprovalStep;
 use App\Models\Organization;
 use App\Models\OrganizationInvite;
 use App\Models\OrganizationMembership;
@@ -102,6 +103,10 @@ class OrganizationController extends Controller
         return DB::transaction(function () use ($org, $membership, $data) {
             $member = OrganizationMembership::where('organization_id', $org->id)->lockForUpdate()->findOrFail($membership);
             abort_if($member->user_id === $org->owner_user_id, 409, 'The owner must retain access.');
+            if ($data['suspended'] || $data['role'] !== 'manager') {
+                $assigned = ApprovalStep::where('reviewer_id', $member->user_id)->whereIn('status', ['pending', 'waiting'])->whereHas('request', fn ($q) => $q->where('status', 'pending'))->exists();
+                abort_if($assigned, 409, 'Resolve or reroute this member\'s pending approval assignments first.');
+            }
             $member->update($data);
 
             return $member;

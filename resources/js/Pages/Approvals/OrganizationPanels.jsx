@@ -410,9 +410,6 @@ export function DatabaseViewer() {
                     {t('refresh')}
                 </button>
             </div>
-            <p className="settings-body database-note">
-                {t('databaseScopeHelp')}
-            </p>
             {error ? (
                 <p role="alert" className="settings-body">
                     {t('forbidden')}
