@@ -35,3 +35,7 @@ jobs:
               if timeout 6 bash -c "</dev/tcp/$host/$port" 2>/dev/null; then echo "OUTBOUND_OPEN $target"; else echo "OUTBOUND_BLOCKED $target"; fi
             done
             systemctl is-active ae-reverb || true
+            echo '--- turn relay (secrets removed) ---'
+            grep -v -E 'secret' /etc/turnserver.conf || true
+            ss -lunp | grep -E 'turnserver|:3478' | head -5 || true
+            journalctl -u coturn --since '-45 min' --no-pager 2>/dev/null | grep -Ei 'error|denied|forbidden|quota|peer|permission|refused|allocation' | tail -40 || true
