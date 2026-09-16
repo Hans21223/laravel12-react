@@ -7,11 +7,13 @@ use App\Models\Organization;
 use App\Models\OrganizationInvite;
 use App\Models\OrganizationMembership;
 use App\Models\User;
+use App\Notifications\OrganizationInvitation;
 use App\Services\OrganizationService;
 use App\Services\TenantContext;
 use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Process;
 use Tests\TestCase;
 
@@ -305,5 +307,16 @@ class OrganizationIsolationTest extends TestCase
         $this->flushSession();
         $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => $channel])->assertForbidden();
         $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => 'private-workspace.'.$org->id.'.'.$outsider->id])->assertForbidden();
+    }
+
+    public function test_email_locked_invitations_can_be_emailed(): void
+    {
+        Notification::fake();
+        $owner = User::factory()->create();
+        $org = $this->organization($owner, 'Mailed Invites');
+        $this->actor($owner, $org)->postJson('/api/organization/invites', ['label' => 'Open key', 'max_uses' => 1, 'days' => 1, 'send_email' => true])->assertCreated()->assertJsonPath('emailed', false);
+        $response = $this->postJson('/api/organization/invites', ['label' => 'Designer', 'email' => 'new.hire@example.com', 'max_uses' => 1, 'days' => 3, 'send_email' => true])->assertCreated()->assertJsonPath('emailed', true);
+        Notification::assertSentOnDemand(OrganizationInvitation::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'new.hire@example.com' && $notification->key === $response->json('key') && str_contains($notification->toMail($notifiable)->render(), 'Mailed Invites'));
+        Notification::assertSentOnDemandTimes(OrganizationInvitation::class, 1);
     }
 }

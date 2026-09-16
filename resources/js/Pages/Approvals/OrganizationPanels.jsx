@@ -185,7 +185,7 @@ function OrganizationProfile({ user, toast }) {
 export function OrganizationSettings({ user, toast }) {
     const { t, date } = useLocale();
     const [invites, setInvites] = useState([]),
-        [form, setForm] = useState({ label: '', email: '', max_uses: 1, days: 7 }),
+        [form, setForm] = useState({ label: '', email: '', max_uses: 1, days: 7, send_email: false }),
         [key, setKey] = useState(''),
         [busy, setBusy] = useState(false);
     async function load() {
@@ -204,7 +204,8 @@ export function OrganizationSettings({ user, toast }) {
         try {
             const { data } = await axios.post('/api/organization/invites', form);
             setKey(data.key);
-            setForm({ label: '', email: '', max_uses: 1, days: 7 });
+            if (form.send_email) toast(t(data.emailed ? 'inviteEmailed' : 'inviteEmailFailed'), data.emailed ? 'success' : 'error');
+            setForm({ label: '', email: '', max_uses: 1, days: 7, send_email: false });
             await load();
         } catch {
             toast(t('validation'), 'error');
@@ -247,6 +248,17 @@ export function OrganizationSettings({ user, toast }) {
                             <Field label={t('restrictEmail')}>{field('email', { type: 'email' })}</Field>
                             <Field label={t('allowedUses')}>{field('max_uses', { required: true, type: 'number', min: 1, max: 20 })}</Field>
                             <Field label={t('validDays')}>{field('days', { required: true, type: 'number', min: 1, max: 14 })}</Field>
+                            {form.email && (
+                                <label className="col-span-full mb-[18px] flex items-center gap-2 text-[12px] text-muted">
+                                    <input
+                                        type="checkbox"
+                                        className="size-4 [accent-color:#c64250]"
+                                        checked={form.send_email}
+                                        onChange={(e) => setForm({ ...form, send_email: e.target.checked })}
+                                    />
+                                    {t('emailInviteKey')}
+                                </label>
+                            )}
                             <button className="btn primary" disabled={busy}>
                                 {t('generateInvite')}
                             </button>

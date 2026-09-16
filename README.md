@@ -30,7 +30,7 @@ A multi-organization approval workspace built with **Laravel 12, React 18, Inert
 
 **Organizations (public multi-tenant)**
 - Anyone can register and create an organization; each organization gets **its own MySQL database and credentials**.
-- Joining requires an invitation key: hashed at rest, single- or multi-use, expiring, revocable, optionally locked to one email.
+- Joining requires an invitation key: hashed at rest, single- or multi-use, expiring, revocable, optionally locked to one email and emailed to that address.
 - Owners rename, **transfer ownership** and **close** organizations; managers promote, demote or suspend members; members **leave**.
 - Failed setups are listed with **Retry** and **Remove**, and do not count toward organization limits.
 - Managers get a read-only **Database** explorer of their own organization's business tables.

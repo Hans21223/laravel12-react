@@ -8,10 +8,12 @@ use App\Models\Organization;
 use App\Models\OrganizationInvite;
 use App\Models\OrganizationMembership;
 use App\Models\User;
+use App\Notifications\OrganizationInvitation;
 use App\Services\OrganizationService;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -167,11 +169,22 @@ class OrganizationController extends Controller
     public function invite(Request $r)
     {
         $org = $this->manager($r);
-        $data = $r->validate(['label' => 'required|string|max:100', 'email' => 'nullable|email|max:255', 'max_uses' => 'required|integer|min:1|max:20', 'days' => 'required|integer|min:1|max:14']);
+        $data = $r->validate(['label' => 'required|string|max:100', 'email' => 'nullable|email|max:255', 'max_uses' => 'required|integer|min:1|max:20', 'days' => 'required|integer|min:1|max:14', 'send_email' => 'boolean']);
         $key = 'AE-'.Str::random(40);
         $invite = OrganizationInvite::create(['organization_id' => $org->id, 'created_by' => $r->user()->id, 'key_hash' => hash('sha256', $key), 'label' => $data['label'], 'email' => $data['email'] ?? null, 'max_uses' => $data['max_uses'], 'expires_at' => now()->addDays($data['days'])]);
 
-        return response()->json(['invitation' => $invite, 'key' => $key], 201)->header('Cache-Control', 'no-store');
+        $emailed = false;
+        if (($data['send_email'] ?? false) && $invite->email) {
+            // A delivery failure never loses the key: it is still returned once for manual sharing.
+            try {
+                Notification::route('mail', $invite->email)->notify(new OrganizationInvitation($org->name, $r->user()->name, $key, $invite->expires_at->toFormattedDateString()));
+                $emailed = true;
+            } catch (\Throwable $error) {
+                report($error);
+            }
+        }
+
+        return response()->json(['invitation' => $invite, 'key' => $key, 'emailed' => $emailed], 201)->header('Cache-Control', 'no-store');
     }
 
     public function revoke(Request $r, int $invite)

@@ -531,6 +531,9 @@ const en = {
     deleteAccountOwner: "You still own an organization. Transfer ownership or close it first.",
     deleteAccountMember: "You are still a member of an active organization. Leave it first.",
     deleteAccountRecords: "This account owns approval records and cannot be deleted.",
+    emailInviteKey: "Also email this key to the address above",
+    inviteEmailed: "Invitation key emailed.",
+    inviteEmailFailed: "The key was created but the email could not be sent. Share it manually.",
 };
 const th = {
     crudCleanupNeeded: 'ลบฉบับร่างทดสอบอัตโนมัติไม่สำเร็จ กรุณาเปิดรหัสคำร้องนี้และลบหลังตรวจสอบข้อผิดพลาด',
@@ -1044,6 +1047,9 @@ const th = {
     deleteAccountOwner: "คุณยังเป็นเจ้าขององค์กรอยู่ กรุณาโอนความเป็นเจ้าของหรือปิดองค์กรก่อน",
     deleteAccountMember: "คุณยังเป็นสมาชิกขององค์กรที่ใช้งานอยู่ กรุณาออกจากองค์กรก่อน",
     deleteAccountRecords: "บัญชีนี้มีบันทึกคำร้องอยู่จึงลบไม่ได้",
+    emailInviteKey: "ส่งคีย์นี้ไปยังอีเมลด้านบนด้วย",
+    inviteEmailed: "ส่งคีย์เชิญทางอีเมลแล้ว",
+    inviteEmailFailed: "สร้างคีย์แล้ว แต่ส่งอีเมลไม่สำเร็จ กรุณาแชร์คีย์ด้วยตนเอง",
 };
 const ja = {
     crudCleanupNeeded: 'テスト用下書きを自動削除できませんでした。エラーを確認し、この申請IDを開いて削除してください。',
@@ -1561,6 +1567,9 @@ const ja = {
     deleteAccountOwner: "まだ組織を所有しています。先に譲渡または閉鎖してください。",
     deleteAccountMember: "まだ有効な組織のメンバーです。先に退出してください。",
     deleteAccountRecords: "このアカウントには申請記録があるため削除できません。",
+    emailInviteKey: "このキーを上記のアドレスにもメールで送信",
+    inviteEmailed: "招待キーをメールで送信しました。",
+    inviteEmailFailed: "キーは作成されましたが、メールを送信できませんでした。手動で共有してください。",
 };
 export const dictionaries = { en, th, ja };
 const Context = createContext(null);
