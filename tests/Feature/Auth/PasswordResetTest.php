@@ -70,4 +70,15 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_reset_link_response_does_not_reveal_unknown_emails(): void
+    {
+        Notification::fake();
+
+        $this->post('/forgot-password', ['email' => 'nobody@example.com'])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'reset-link-sent');
+
+        Notification::assertNothingSent();
+    }
 }

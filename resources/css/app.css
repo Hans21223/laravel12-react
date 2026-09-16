@@ -1,55 +1,150 @@
 @tailwind base;
+
+/* Theme tokens. Tailwind colors (bg-surface, text-ink, border-line …) resolve to these variables. */
+:root {
+    --bg: #f3f5f8;
+    --surface: #fff;
+    --surface-alt: #f6f7f8;
+    --ink: #182b43;
+    --muted: #708095;
+    --line: #dfe5ed;
+    --green: #244e80;
+    --green-dark: #193858;
+    --green-tint: #eaf0f7;
+    --shadow: 0 4px 20px #213e2e04;
+    --signal: #c6424c;
+    --signal-hover: #ad3440;
+    --technical-font: 'Bahnschrift', 'Arial Narrow', 'Segoe UI', sans-serif;
+}
+html[data-accord-theme='dark'] {
+    --bg: #0c1522;
+    --surface: #142236;
+    --surface-alt: #1c2d44;
+    --ink: #e1e9f5;
+    --muted: #9caec8;
+    --line: #2a3d58;
+    --green: #93b9ea;
+    --green-dark: #afccf1;
+    --green-tint: #203b60;
+    --shadow: none;
+}
+
+html:has(.accord),
+body:has(.accord) {
+    @apply bg-[#f3f5f8] text-[#182b43];
+    color-scheme: light;
+}
+html[data-accord-theme='dark'],
+html[data-accord-theme='dark'] body {
+    @apply bg-[#0c1522];
+    color-scheme: dark;
+}
+.accord,
+.accord-dialog {
+    @apply font-sans text-[13px] leading-normal text-ink;
+    color-scheme: light;
+}
+html[data-accord-theme='dark'] .accord,
+html[data-accord-theme='dark'] .accord-dialog {
+    color-scheme: dark;
+}
+.accord *,
+.accord-dialog * {
+    @apply box-border;
+    scrollbar-width: thin;
+    scrollbar-color: #b8c5bc transparent;
+}
+/* Element defaults stay at element specificity so Tailwind utilities always win. */
+:where(.accord, .accord-dialog) :is(button, a) {
+    @apply [-webkit-tap-highlight-color:transparent] [transition:background_0.16s,color_0.16s,box-shadow_0.16s,transform_0.16s];
+}
+:where(.accord, .accord-dialog) button {
+    @apply rounded;
+}
+:where(.accord, .accord-dialog) button:disabled {
+    @apply cursor-not-allowed opacity-[0.45];
+}
+:where(.accord, .accord-dialog) :focus-visible {
+    @apply outline outline-2 outline-offset-[3px] outline-[#507aa8] [box-shadow:none];
+}
+/* Form controls must outrank the @tailwindcss/forms base styles, so utilities on them may need the ! modifier. */
+.accord :is(input, select, textarea),
+.accord-dialog :is(input, select, textarea) {
+    @apply rounded border border-line bg-surface text-[13px] text-ink [box-shadow:none] placeholder:text-muted placeholder:opacity-[0.85];
+}
+:where(.accord, .accord-dialog) :is(h1, h2, h3, p) {
+    @apply m-0;
+}
+:where(.accord, .accord-dialog) a {
+    @apply text-inherit;
+}
+/* The workspace "Reduce motion" preference and the operating-system setting both disable animation. */
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    .accord *,
+    .accord-dialog * {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+}
+@media print {
+    .accord {
+        background: white !important;
+        color: black !important;
+    }
+}
+
 @tailwind components;
+
+/* Shared primitives. Variants use :where() so page utilities can still override them. */
+.btn {
+    @apply inline-flex min-h-[39px] items-center justify-center gap-2 whitespace-nowrap rounded border border-transparent px-[15px] py-2.5 text-[12px] font-semibold leading-[1.45] tracking-[0.15px];
+}
+.btn:where(.primary) {
+    @apply bg-signal text-white shadow-[0_2px_0_#8e20301a] hover:-translate-y-px hover:bg-signal-hover hover:shadow-[0_3px_12px_#c6424c25];
+}
+.btn:where(.secondary) {
+    @apply border-line bg-surface text-ink hover:border-[#b8c8bc] hover:bg-surface-alt;
+}
+.btn:where(.ghost) {
+    @apply text-muted hover:bg-surface-alt hover:text-ink;
+}
+.btn:where(.danger) {
+    @apply bg-[#b44747] text-white hover:bg-[#953737];
+}
+.icon-button {
+    @apply inline-flex size-[34px] shrink-0 items-center justify-center rounded text-muted hover:bg-surface-alt hover:text-ink;
+}
+.icon-button:where(.destructive) {
+    @apply hover:bg-[#faecec] hover:text-[#bb4e4e];
+}
+.panel {
+    @apply overflow-hidden rounded-[5px] border border-line bg-surface shadow-card;
+}
+.panel-heading {
+    @apply flex min-h-16 items-center justify-between gap-4 px-[21px] py-[18px] max-md:p-[18px];
+}
+:where(.panel-heading) h3 {
+    @apply font-technical text-[14px] font-semibold tracking-[0.05px];
+}
+:where(.panel-heading) p {
+    @apply mt-1 text-[10px] text-muted;
+}
+:where(.panel-heading) > svg {
+    @apply text-muted;
+}
+.text-link {
+    @apply inline-flex items-center gap-[7px] text-[12px] font-semibold text-brand hover:text-brand-dark hover:underline;
+}
+.eyebrow {
+    @apply mb-2 font-mono text-[9px] font-[650] tracking-[1.55px] text-[#7c8da4];
+}
 @tailwind utilities;
-
-@layer base {
-    html {
-        @apply bg-zinc-950;
-        color-scheme: dark;
-    }
-
-    body {
-        @apply bg-zinc-950 text-zinc-200 antialiased;
-    }
-
-    /* แถบเลื่อนให้เข้ากับธีมมืด */
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: theme('colors.zinc.700') transparent;
-    }
-
-    *::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    *::-webkit-scrollbar-thumb {
-        @apply rounded-full bg-zinc-700;
-    }
-
-    *::-webkit-scrollbar-thumb:hover {
-        @apply bg-zinc-600;
-    }
-
-    *::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    :focus-visible {
-        @apply outline-none ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-zinc-950;
-    }
-}
-
-@layer components {
-    /* พื้นหลังตารางกริดแบบจอเรดาร์ */
-    .bg-grid {
-        background-image:
-            linear-gradient(to right, theme('colors.zinc.800 / 60%') 1px, transparent 1px),
-            linear-gradient(to bottom, theme('colors.zinc.800 / 60%') 1px, transparent 1px);
-        background-size: 44px 44px;
-    }
-
-    .text-glow {
-        text-shadow: 0 0 12px currentColor;
-    }
-}

@@ -70,16 +70,42 @@ export function Icon({ name, size = 20, ...props }) {
         </svg>
     );
 }
-export function Logo({ compact = false }) {
+const logoVariants = {
+    sidebar: {
+        root: 'gap-2.5 max-xl:gap-[7px]',
+        mark: 'h-[38px] w-[46px] max-xl:w-10 [&>svg]:h-8 [&>svg]:w-[46px] max-xl:[&>svg]:w-10',
+        name: 'text-[18px] tracking-[2.2px] max-xl:text-[16px] max-xl:tracking-[1.6px]',
+        sub: 'text-[8px] tracking-[3px] max-xl:text-[7px] max-xl:tracking-[2.4px]',
+    },
+    auth: {
+        root: 'relative z-[1] gap-2.5 max-xl:gap-[7px]',
+        mark: 'h-[46px] w-16 [&>svg]:h-[43px] [&>svg]:w-16',
+        name: 'text-[23px] tracking-[3px]',
+        sub: 'text-[10px] tracking-[3.7px]',
+    },
+    mobile: {
+        root: 'gap-[7px]',
+        mark: 'h-[38px] w-[46px] [&>svg]:h-8 [&>svg]:w-[46px]',
+        name: 'text-[17px] tracking-[1.8px]',
+        sub: 'text-[7px] tracking-[2.7px]',
+    },
+};
+export function Logo({ compact = false, variant = 'sidebar' }) {
+    const v = logoVariants[variant];
     return (
-        <div className="accord-logo" aria-label="Anaheim Electronics">
-            <span className="logo-mark">
+        <div
+            className={`flex items-center font-[650] leading-none ${v.root}`}
+            aria-label="Anaheim Electronics"
+        >
+            <span
+                className={`flex shrink-0 items-center justify-center ${v.mark}`}
+            >
                 <AEMark />
             </span>
             {!compact && (
-                <span className="ae-wordmark">
-                    <strong>ANAHEIM</strong>
-                    <small>ELECTRONICS</small>
+                <span className="flex min-w-0 flex-col gap-[3px] font-technical leading-none">
+                    <strong className={`font-[750] ${v.name}`}>ANAHEIM</strong>
+                    <small className={`font-[450] ${v.sub}`}>ELECTRONICS</small>
                 </span>
             )}
         </div>
@@ -92,10 +118,22 @@ export function AEMark() {
         </svg>
     );
 }
-export function TechnicalArt() {
+export function TechnicalArt({ variant = 'hero' }) {
+    const auth = variant === 'auth';
     return (
-        <div className="technical-art" aria-hidden="true">
-            <svg viewBox="0 0 400 260" fill="none">
+        <div
+            className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[#8aaed7] ${
+                auth
+                    ? 'right-1/2 h-[286px] w-[440px] translate-x-1/2 opacity-85'
+                    : 'right-[3px] h-[244px] w-[360px] max-xl:right-[-30px] max-xl:w-[330px] max-xl:opacity-75 max-lg:right-[-90px] max-lg:opacity-35 max-md:right-[-108px] max-md:opacity-25'
+            }`}
+            aria-hidden="true"
+        >
+            <svg
+                viewBox="0 0 400 260"
+                fill="none"
+                className="size-full motion-safe:animate-drawing-in"
+            >
                 <defs>
                     <pattern
                         id="ae-grid"
@@ -129,7 +167,7 @@ export function TechnicalArt() {
                     <circle cx="125" cy="207" r="3" />
                     <path d="M212 31h16v3h-16zM316 122h3v16h-3z" />
                 </g>
-                <g className="technical-accent" strokeWidth="2">
+                <g className="stroke-[#d4717c]" strokeWidth="2">
                     <path d="M155 91V70h22M287 171v21h-22" />
                     <path d="M36 95h28m-28 6h17M340 217h28m-28 6h17" />
                 </g>
@@ -151,9 +189,11 @@ export function TechnicalArt() {
                     </text>
                 </g>
             </svg>
-            <span className="technical-plate">
+            <span
+                className={`absolute bottom-[23px] right-[19px] items-center gap-[9px] border border-[#678cb744] bg-[#142b47b0] px-2.5 py-[7px] text-[#c2d6ed] -skew-x-6 max-md:hidden [&>svg]:h-6 [&>svg]:w-[34px] ${auth ? 'hidden' : 'flex'}`}
+            >
                 <AEMark />
-                <span>
+                <span className="font-technical text-[6px] leading-[1.6] tracking-[1.2px]">
                     ANAHEIM
                     <br />
                     ELECTRONICS
@@ -163,44 +203,82 @@ export function TechnicalArt() {
     );
 }
 export const typeIcons = { leave: 'leaf', budget: 'wallet', document: 'file' };
-export function TypeIcon({ type, size = 18 }) {
+const typeTones = {
+    document: 'border-[#dfe6f1] bg-[#edf2f9] text-[#6486af]',
+    leave: 'border-[#e0e8ea] bg-[#edf2f3] text-[#69898d]',
+    budget: 'border-[#ece5d5] bg-[#f6f2e9] text-[#a78e57]',
+};
+const typeSizes = { sm: 'h-[29px] w-7', md: 'h-[35px] w-[34px]', lg: 'size-[49px]' };
+export function TypeIcon({ type, size = 18, box = 'md' }) {
     return (
-        <span className={`type-icon ${type}`}>
+        <span
+            className={`inline-flex shrink-0 items-center justify-center rounded border ${typeSizes[box]} ${typeTones[type] || 'border-[#e9e8dd] bg-[#f6f5ed] text-[#a3986d]'}`}
+        >
             <Icon name={typeIcons[type]} size={size} />
         </span>
     );
 }
+const statusTones = {
+    pending: 'border-[#eee2c8] bg-[#fbf6e9] text-[#9c7a2d]',
+    approved: 'border-[#e0ede2] bg-[#edf5f1] text-[#4f7f6b]',
+    rejected: 'border-[#f0dce0] bg-[#fbeced] text-[#b35d67]',
+    cancelled: 'border-[#ebe2ef] bg-[#f4eff7] text-[#8e7b94]',
+};
 export function Badge({ status }) {
     const { t } = useLocale();
     return (
-        <span className={`status-badge ${status}`}>
-            <span />
+        <span
+            className={`inline-flex items-center gap-[5px] whitespace-nowrap rounded-[3px] border px-[7px] py-1 text-[9px] font-medium leading-[1.1] dark:brightness-[.86] ${statusTones[status] || 'border-[#e8e9eb] bg-[#f1f2f3] text-[#81878d]'}`}
+        >
+            <span className="size-1 rounded-full bg-current" />
             {t(status)}
         </span>
     );
 }
-export function Priority({ value }) {
+const priorityLevels = { low: 0, normal: 1, high: 2, urgent: 3 };
+export function Priority({ value, className = '' }) {
     const { t } = useLocale();
+    const level = priorityLevels[value] ?? 0;
     return (
-        <span className={`priority ${value}`}>
-            <span className="priority-bars">
-                <i />
-                <i />
-                <i />
+        <span
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] ${value === 'urgent' ? 'text-[#ad7762]' : 'text-muted'} ${className}`}
+        >
+            <span className="inline-flex h-2.5 items-end gap-0.5">
+                {['h-1', 'h-[7px]', 'h-2.5'].map((height, i) => (
+                    <i
+                        key={height}
+                        className={`w-0.5 rounded-[1px] bg-current ${height} ${i < level ? '' : 'opacity-25'}`}
+                    />
+                ))}
             </span>
             {t(value)}
         </span>
     );
 }
-export function Avatar({ name = '', small = false, src }) {
+const avatarTones = [
+    'bg-[#e8e4ed] text-[#796587]',
+    'bg-[#e7ecdf] text-[#667550]',
+    'bg-[#eee5df] text-[#956f58]',
+    'bg-[#e0e9ed] text-[#5e7f90]',
+];
+export const avatarTone = (name = '') => avatarTones[name.length % 4];
+export function Avatar({ name = '', small = false, src, className }) {
     const [failed, setFailed] = useState(false);
     useEffect(() => setFailed(false), [src]);
     return (
         <span
-            className={`avatar ${small ? 'small' : ''} tone-${name.length % 4}`}
+            className={`inline-flex shrink-0 items-center justify-center overflow-hidden font-[650] ${
+                className ||
+                `${small ? 'size-[29px] rounded text-[9px]' : 'size-9 rounded-md text-[11px]'} ${avatarTone(name)}`
+            }`}
         >
             {src && !failed ? (
-                <img src={src} alt="" onError={() => setFailed(true)} />
+                <img
+                    src={src}
+                    alt=""
+                    className="size-full object-cover"
+                    onError={() => setFailed(true)}
+                />
             ) : (
                 name
                     .trim()
@@ -216,9 +294,10 @@ export function Avatar({ name = '', small = false, src }) {
 export function LanguagePicker() {
     const { locale, setLocale, t } = useLocale();
     return (
-        <div className="language-picker">
+        <div className="flex items-center gap-1 text-muted">
             <Icon name="globe" size={17} />
             <select
+                className="min-w-[62px] rounded !border-0 !bg-transparent bg-[length:12px] bg-[position:right_3px_center] !py-[5px] !pl-[3px] !pr-[22px] !text-[11px] text-ink"
                 aria-label={t('language')}
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
@@ -236,15 +315,27 @@ export function Modal({
     title,
     children,
     className = '',
+    width = 'max-w-[690px]',
+    headingClassName = '',
 }) {
     const { t } = useLocale();
     return (
-        <Dialog open={open} onClose={onClose} className="accord-dialog">
-            <div className="dialog-backdrop" />
-            <div className="dialog-scroll">
-                <DialogPanel className={`dialog-panel ${className}`}>
-                    <div className="dialog-heading">
-                        <DialogTitle>{title}</DialogTitle>
+        <Dialog
+            open={open}
+            onClose={onClose}
+            className="accord-dialog relative z-[70]"
+        >
+            <div className="fixed inset-0 bg-[#0f211d70] backdrop-blur-[4px] print:hidden" />
+            <div className="fixed inset-0 flex items-start justify-center overflow-y-auto px-5 py-10 max-md:px-2.5 max-md:py-[18px]">
+                <DialogPanel
+                    className={`relative my-auto w-full animate-enter rounded-[5px] bg-surface text-ink shadow-[0_24px_80px_#0a1f2440] ${width} ${className}`}
+                >
+                    <div
+                        className={`flex items-center justify-between gap-[18px] rounded-t-[5px] border-b border-t-[3px] border-b-line border-t-signal px-[25px] py-[18px] max-md:px-[18px] max-md:py-3.5 ${headingClassName}`}
+                    >
+                        <DialogTitle className="font-technical text-[16px] font-semibold tracking-[0.2px]">
+                            {title}
+                        </DialogTitle>
                         <button
                             type="button"
                             className="icon-button"
@@ -263,14 +354,16 @@ export function Modal({
 export function Empty({ filtered = false, onCreate }) {
     const { t } = useLocale();
     return (
-        <div className="empty-state">
-            <span className="empty-illustration">
+        <div className="flex flex-col items-center gap-3 px-[25px] py-[60px] text-center text-muted">
+            <span className="mb-2 grid size-[75px] place-items-center rounded-[5px] border border-line bg-brand-tint text-brand">
                 <Icon name={filtered ? 'search' : 'inbox'} size={32} />
             </span>
-            <h3>{t(filtered ? 'noResults' : 'noRequests')}</h3>
-            <p>{t(filtered ? 'noResultsSub' : 'emptySub')}</p>
+            <h3 className="font-technical text-[18px] font-[550] tracking-[-0.3px] text-ink">
+                {t(filtered ? 'noResults' : 'noRequests')}
+            </h3>
+            <p className="text-[12px]">{t(filtered ? 'noResultsSub' : 'emptySub')}</p>
             {onCreate && (
-                <button className="btn primary" onClick={onCreate}>
+                <button className="btn primary mt-[5px]" onClick={onCreate}>
                     <Icon name="plus" size={17} />
                     {t('newRequest')}
                 </button>
@@ -278,38 +371,68 @@ export function Empty({ filtered = false, onCreate }) {
         </div>
     );
 }
-export function Field({ label, error, children, hint }) {
+const fieldControls =
+    '[&>:is(input,select,textarea)]:w-full [&>:is(input,select,textarea)]:px-3 [&>:is(input,select,textarea)]:py-2.5 [&>:is(input,select,textarea)]:leading-[1.6] max-md:[&>:is(input,select,textarea)]:min-w-0 max-md:[&>:is(input,select,textarea)]:text-[14px] [&>select]:pr-7 [&_:is(input,select,textarea):focus]:border-[#6e91be] [&_:is(input,select,textarea):focus]:[box-shadow:0_0_0_3px_#6e91be12] [&_:is(input,select,textarea):focus]:outline-0 [&_[aria-invalid=true]]:border-[#ce8c83] [&_textarea]:min-h-[72px] [&_textarea]:resize-y';
+export function Field({ label, error, children, hint, className = 'mb-[18px]' }) {
     return (
-        <label className="form-field">
-            <span>{label}</span>
+        <label className={`flex flex-col gap-[7px] ${fieldControls} ${className}`}>
+            <span className="text-[11px] font-semibold text-ink">{label}</span>
             {children}
             {error && (
-                <small className="field-error" role="alert">
+                <small className="text-[10px] font-normal text-[#b5655a]" role="alert">
                     {error}
                 </small>
             )}
-            {hint && !error && <small className="field-hint">{hint}</small>}
+            {hint && !error && (
+                <small className="text-[10px] font-normal text-muted">{hint}</small>
+            )}
         </label>
     );
 }
-export function OrbitArt() {
+export function PageHeading({ eyebrow, title, sub, actions, compactTitle = false }) {
     return (
-        <div className="orbit-art" aria-hidden="true">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <div className="orbit orbit-three" />
-            <span className="orbit-point point-one">
-                <Icon name="check" size={24} />
-            </span>
-            <span className="orbit-point point-two">
-                <Icon name="file" size={20} />
-            </span>
-            <span className="orbit-point point-three">
-                <Icon name="spark" size={18} />
-            </span>
-            <span className="orbit-center">
-                <Icon name="layers" size={40} />
-            </span>
+        <div className="mb-[25px] flex items-center justify-between gap-5 max-md:mb-[22px] max-md:items-start max-md:gap-[15px] max-md:[&>.btn]:mt-5 max-md:[&>.btn]:px-2.5 max-md:[&>.btn]:py-[9px] max-md:[&>.btn]:text-[10px] print:[&>.btn]:!hidden">
+            <div>
+                <div className="eyebrow max-md:text-[8px]">{eyebrow}</div>
+                <h1
+                    className={`font-technical text-[29px] font-[650] leading-[1.3] tracking-[-0.65px] ${compactTitle ? 'max-md:text-[24px]' : 'max-md:text-[25px]'}`}
+                >
+                    {title}
+                </h1>
+                <p className="mt-[7px] text-[12px] text-muted max-md:max-w-[360px]">
+                    {sub}
+                </p>
+            </div>
+            {actions}
+        </div>
+    );
+}
+
+export function LiveStatus({ offline = false, label }) {
+    return (
+        <span className="inline-flex items-center gap-[5px] text-[9px] text-muted">
+            <i
+                className={`size-[5px] rounded-[1px] [box-shadow:0_0_0_3px_#668aab10] ${offline ? 'bg-[#be856f]' : 'bg-[#668aab]'}`}
+            />
+            {label}
+        </span>
+    );
+}
+
+export function CountPill({ children }) {
+    return (
+        <span className="inline-flex min-w-[21px] items-center justify-center rounded border border-line bg-surface-alt px-1.5 py-px text-[10px] font-medium text-muted">
+            {children}
+        </span>
+    );
+}
+
+export function DialogFooter({ children, className = '' }) {
+    return (
+        <div
+            className={`flex items-center justify-between gap-3 rounded-b-[5px] border-t border-t-line bg-surface-alt px-[25px] py-[18px] max-md:px-[18px] max-md:py-[15px] max-md:[&_.btn]:px-[11px] max-md:[&_.btn]:py-2.5 max-md:[&_.btn]:text-[10px] ${className}`}
+        >
+            {children}
         </div>
     );
 }

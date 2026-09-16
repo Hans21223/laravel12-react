@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Avatar, Icon } from './UI';
+import { Avatar, avatarTone, Icon } from './UI';
 import { useLocale } from './i18n';
 
 const merge = (a, b) =>
@@ -126,11 +126,24 @@ export default function Messages({
             toast(t('error'), 'error');
         }
     }
+    const call = (mode) => (
+        <button
+            className="icon-button"
+            disabled={!callsAvailable}
+            title={t(callsAvailable ? (mode === 'video' ? 'videoCall' : 'voiceCall') : 'callsUnavailable')}
+            aria-label={t(mode === 'video' ? 'videoCall' : 'voiceCall')}
+            onClick={() => onCall(peer, mode)}
+        >
+            <Icon name={mode === 'video' ? 'video' : 'phone'} />
+        </button>
+    );
     return (
-        <section className={`panel messaging-shell ${peer ? 'has-peer' : ''}`}>
-            <aside className="conversation-list">
-                <header>
-                    <h3>{t('messages')}</h3>
+        <section className="panel grid h-[min(720px,calc(100dvh_-_220px))] min-h-[430px] grid-cols-[280px_minmax(0,1fr)] overflow-hidden max-lg:grid-cols-[220px_minmax(0,1fr)] max-sm:block max-sm:h-[calc(100dvh_-_200px)]">
+            <aside
+                className={`overflow-y-auto border-r border-r-line bg-surface-alt max-sm:h-full ${peer ? 'max-sm:hidden' : ''}`}
+            >
+                <header className="flex items-center justify-between border-b border-b-line p-[18px]">
+                    <h3 className="font-[650]">{t('messages')}</h3>
                     <button
                         className="icon-button"
                         title={t('newConversation')}
@@ -145,146 +158,113 @@ export default function Messages({
                         conversation.peer && (
                             <button
                                 key={conversation.peer.id}
-                                className={`conversation ${peer?.id === conversation.peer.id ? 'active' : ''}`}
+                                className={`flex w-full items-center gap-2.5 border-b border-b-line p-[17px] text-left ${peer?.id === conversation.peer.id ? 'border-l-[3px] border-l-signal bg-brand-tint pl-3.5' : ''}`}
                                 onClick={() => setPeer(conversation.peer)}
                             >
-                                <Avatar
-                                    name={conversation.peer.name}
-                                    src={conversation.peer.avatar_url}
-                                />
-                                <span>
-                                    <strong>{conversation.peer.name}</strong>
-                                    <small>{conversation.latest.body}</small>
+                                <Avatar name={conversation.peer.name} src={conversation.peer.avatar_url} />
+                                <span className="min-w-0 flex-1">
+                                    <strong className="block truncate">{conversation.peer.name}</strong>
+                                    <small className="mt-1 block truncate text-[11px] text-muted">
+                                        {conversation.latest.body}
+                                    </small>
                                 </span>
                                 {conversation.unread > 0 && (
-                                    <b>{conversation.unread}</b>
+                                    <b className="rounded-lg bg-signal px-1.5 py-0.5 text-[10px] text-white">
+                                        {conversation.unread}
+                                    </b>
                                 )}
                             </button>
                         ),
                 )}
                 {!conversations.length && (
-                    <p className="settings-hint">{t('noConversations')}</p>
+                    <p className="m-0 p-5 text-[12px] leading-[1.6] text-muted">{t('noConversations')}</p>
                 )}
             </aside>
-            <div className="chat-main">
+            <div className={`min-h-0 min-w-0 flex-col max-sm:h-full ${peer ? 'flex' : 'flex max-sm:hidden'}`}>
                 {peer ? (
                     <>
-                        <header className="chat-header">
+                        <header className="flex items-center gap-3 border-b border-b-line px-[22px] py-4 max-sm:gap-2 max-sm:p-3">
                             <button
-                                className="icon-button chat-back"
+                                className="icon-button hidden max-sm:inline-flex"
                                 onClick={() => setPeer(null)}
                                 aria-label={t('backToConversations')}
                             >
                                 <Icon name="left" />
                             </button>
-                            <Avatar name={peer.name} src={peer.avatar_url} />
-                            <div>
-                                <strong>{peer.name}</strong>
-                                <small>{t('privateConversation')}</small>
+                            <Avatar
+                                name={peer.name}
+                                src={peer.avatar_url}
+                                className={`size-9 rounded-md text-[11px] max-sm:hidden ${avatarTone(peer.name)}`}
+                            />
+                            <div className="flex-1">
+                                <strong className="block">{peer.name}</strong>
+                                <small className="mt-[3px] block text-[11px] text-muted">{t('privateConversation')}</small>
                             </div>
-                            <button
-                                className="icon-button"
-                                disabled={!callsAvailable}
-                                title={t(
-                                    callsAvailable
-                                        ? 'voiceCall'
-                                        : 'callsUnavailable',
-                                )}
-                                aria-label={t('voiceCall')}
-                                onClick={() => onCall(peer, 'audio')}
-                            >
-                                <Icon name="phone" />
-                            </button>
-                            <button
-                                className="icon-button"
-                                disabled={!callsAvailable}
-                                title={t(
-                                    callsAvailable
-                                        ? 'videoCall'
-                                        : 'callsUnavailable',
-                                )}
-                                aria-label={t('videoCall')}
-                                onClick={() => onCall(peer, 'video')}
-                            >
-                                <Icon name="video" />
-                            </button>
+                            {call('audio')}
+                            {call('video')}
                         </header>
                         <div
-                            className="chat-scroll"
+                            className="flex flex-1 flex-col gap-3 overflow-y-auto p-6 max-sm:p-4"
                             ref={scroller}
                             onScroll={() => {
                                 const el = scroller.current;
-                                stick.current =
-                                    el.scrollHeight -
-                                        el.scrollTop -
-                                        el.clientHeight <
-                                    100;
+                                stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
                             }}
                         >
                             {older && !loading && messages.length > 0 && (
-                                <button
-                                    className="btn ghost older-messages"
-                                    onClick={loadOlder}
-                                >
+                                <button className="btn ghost shrink-0 self-center" onClick={loadOlder}>
                                     {t('olderMessages')}
                                 </button>
                             )}
                             {loading && <p role="status">{t('loading')}</p>}
                             {error && (
-                                <p role="alert" className="route-warning">
+                                <p role="alert" className="mx-0 my-2.5 text-signal">
                                     {t('messageFailed')}
                                 </p>
                             )}
-                            {messages.map((message) => (
-                                <div
-                                    className={`message-bubble ${message.sender_id === user.id ? 'sent' : 'received'}`}
-                                    key={message.id}
-                                >
-                                    <p>{message.body}</p>
-                                    <small>
-                                        {date(message.created_at, {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </small>
-                                </div>
-                            ))}
+                            {messages.map((message) => {
+                                const sent = message.sender_id === user.id;
+                                return (
+                                    <div
+                                        className={`max-w-[80%] border px-[15px] py-3 max-sm:max-w-[90%] ${sent ? 'self-end rounded-[12px_4px_12px_12px] border-transparent bg-brand-tint' : 'self-start rounded-[4px_12px_12px_12px] border-line bg-surface-alt'}`}
+                                        key={message.id}
+                                    >
+                                        <p className="m-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{message.body}</p>
+                                        <small className="mt-[7px] block text-right text-[10px] text-muted">
+                                            {date(message.created_at, { hour: '2-digit', minute: '2-digit' })}
+                                        </small>
+                                    </div>
+                                );
+                            })}
                         </div>
-                        <form className="chat-composer" onSubmit={send}>
+                        <form className="flex items-center gap-3 border-t border-t-line p-[18px] max-sm:gap-2 max-sm:p-3" onSubmit={send}>
                             <label className="sr-only" htmlFor="dm-body">
                                 {t('messageBody')}
                             </label>
                             <textarea
                                 id="dm-body"
+                                className="min-w-0 flex-1 resize-none"
                                 rows={2}
                                 maxLength={4000}
                                 value={body}
                                 onChange={(e) => setBody(e.target.value)}
                                 placeholder={t('messagePlaceholder')}
                                 onKeyDown={(e) => {
-                                    if (
-                                        e.key === 'Enter' &&
-                                        !e.shiftKey &&
-                                        !e.nativeEvent.isComposing
-                                    ) {
+                                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                                         e.preventDefault();
                                         send(e);
                                     }
                                 }}
                             />
-                            <button
-                                className="btn primary"
-                                disabled={busy || !body.trim()}
-                                aria-label={t('send')}
-                            >
+                            <button className="btn primary" disabled={busy || !body.trim()} aria-label={t('send')}>
                                 <Icon name="send" size={18} />
                             </button>
                         </form>
                     </>
                 ) : (
-                    <div className="chat-empty">
+                    <div className="flex flex-1 flex-col items-center justify-center gap-[18px] p-8 text-center text-muted">
                         <Icon name="comment" size={42} />
-                        <h2>{t('startConversation')}</h2>
+                        <h2 className="text-[20px] font-[650] text-ink">{t('startConversation')}</h2>
                         <p>{t('chatIntro')}</p>
                         <button className="btn primary" onClick={onDirectory}>
                             {t('employeeDirectory')}

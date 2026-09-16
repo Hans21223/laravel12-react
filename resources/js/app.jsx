@@ -4,7 +4,6 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 
-import ToastProvider from '@/Components/UI/ToastProvider';
 
 const appName = 'Anaheim Electronics';
 
@@ -27,11 +26,7 @@ createInertiaApp({
     },
 
     setup({ el, App, props }) {
-        createRoot(el).render(
-            <ToastProvider>
-                <App {...props} />
-            </ToastProvider>,
-        );
+        createRoot(el).render(<App {...props} />);
     },
 
     progress: {

@@ -22,6 +22,6 @@ class Organization extends Model
 
     public function publicPayload(): array
     {
-        return $this->only('id', 'uuid', 'name', 'owner_user_id', 'status');
+        return $this->only('id', 'uuid', 'name', 'owner_user_id', 'status', 'is_legacy');
     }
 }

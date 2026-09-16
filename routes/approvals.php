@@ -28,6 +28,7 @@ Route::middleware(['auth', UseOrganization::class])->group(function () {
         Route::put('/{approval}', [ApprovalController::class, 'update'])->whereNumber('approval');
         Route::delete('/{approval}', [ApprovalController::class, 'destroy'])->whereNumber('approval');
         Route::post('/{approval}/decision', [ApprovalController::class, 'decision'])->whereNumber('approval');
+        Route::post('/{approval}/steps/{step}/reassign', [ApprovalController::class, 'reassign'])->whereNumber(['approval', 'step'])->middleware('throttle:30,1');
         Route::post('/{approval}/cancel', [ApprovalController::class, 'cancel'])->whereNumber('approval');
         Route::post('/{approval}/comments', [ApprovalController::class, 'comment'])->whereNumber('approval')->middleware('throttle:60,1');
         Route::post('/{approval}/attachments', [ApprovalAttachmentController::class, 'store'])->whereNumber('approval')->middleware('throttle:20,1');

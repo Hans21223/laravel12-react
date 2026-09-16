@@ -18,15 +18,30 @@ class OrganizationService
     {
         $org = DB::transaction(function () use ($user, $name) {
             User::whereKey($user->id)->lockForUpdate()->firstOrFail();
-            abort_if(Organization::where('owner_user_id', $user->id)->count() >= config('tenancy.max_owned_organizations'), 422, 'Organization limit reached.');
-            abort_if(Organization::count() >= config('tenancy.max_organizations'), 503, 'Organization capacity reached.');
+            // Closed and failed setups do not count toward the limits.
+            abort_if(Organization::where('owner_user_id', $user->id)->whereNotIn('status', ['closed', 'failed'])->count() >= config('tenancy.max_owned_organizations'), 422, 'Organization limit reached.');
+            abort_if(Organization::whereNotIn('status', ['closed', 'failed'])->count() >= config('tenancy.max_organizations'), 503, 'Organization capacity reached.');
 
             return Organization::create(['uuid' => (string) Str::uuid(), 'name' => $name, 'owner_user_id' => $user->id]);
         });
+
+        return $this->finish($org, $user);
+    }
+
+    // Provision (or re-run the idempotent schema migration for) an organization and make its owner a manager.
+    public function finish(Organization $org, User $user): Organization
+    {
         try {
-            $this->provision($org);
+            if ($org->database_credentials) {
+                app(TenantContext::class)->activate($org);
+                if (Artisan::call('migrate', ['--database' => 'tenant', '--path' => 'database/migrations/tenant', '--force' => true]) !== 0) {
+                    throw new \RuntimeException('Tenant schema setup failed.');
+                }
+            } else {
+                $this->provision($org);
+            }
             DB::transaction(function () use ($org, $user) {
-                OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $user->id, 'role' => 'manager', 'department' => 'Operations']);
+                OrganizationMembership::firstOrCreate(['organization_id' => $org->id, 'user_id' => $user->id], ['role' => 'manager', 'department' => 'Operations']);
                 $org->update(['status' => 'ready']);
                 $user->forceFill(['active_organization_id' => $org->id])->save();
             });

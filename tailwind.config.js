@@ -1,47 +1,55 @@
 import forms from '@tailwindcss/forms';
+import plugin from 'tailwindcss/plugin';
 
+/** Anaheim Electronics design system. Colors resolve to CSS variables so light/dark themes switch without extra classes. */
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
-        './storage/framework/views/*.php',
-        './resources/views/**/*.blade.php',
-        './resources/js/**/*.{js,jsx,ts,tsx}',
-    ],
-
+    content: ['./resources/views/**/*.blade.php', './resources/js/**/*.{js,jsx}'],
+    darkMode: ['variant', '&:is([data-accord-theme="dark"] *)'],
     theme: {
+        // Desktop-first breakpoints of the original layout; use max-md:, max-lg: … for narrower screens.
+        screens: {
+            xs: '601px',
+            sm: '641px',
+            md: '761px',
+            lg: '1001px',
+            xl: '1201px',
+            '2xl': '1600px',
+        },
         extend: {
-            fontFamily: {
-                // ใช้ฟอนต์ของเครื่องผู้ใช้ทั้งหมด ไม่ต้องโหลดจากอินเทอร์เน็ต
-                sans: ['ui-sans-serif', 'system-ui', 'Segoe UI', 'Noto Sans Thai', 'Tahoma', 'sans-serif'],
-                mono: ['ui-monospace', 'Cascadia Mono', 'Consolas', 'Menlo', 'monospace'],
+            colors: {
+                canvas: 'var(--bg)',
+                surface: { DEFAULT: 'var(--surface)', alt: 'var(--surface-alt)' },
+                ink: 'var(--ink)',
+                muted: 'var(--muted)',
+                line: 'var(--line)',
+                brand: { DEFAULT: 'var(--green)', dark: 'var(--green-dark)', tint: 'var(--green-tint)' },
+                signal: { DEFAULT: 'var(--signal)', hover: 'var(--signal-hover)' },
+                navy: { 950: '#0e1a2c', 900: '#111f33', 850: '#16263e', 800: '#1d314d', 700: '#273750', 600: '#344a68' },
             },
+            fontFamily: {
+                sans: ['Segoe UI', 'Noto Sans Thai', 'Yu Gothic UI', 'Tahoma', 'sans-serif'],
+                technical: ['Bahnschrift', 'Arial Narrow', 'Segoe UI', 'sans-serif'],
+                mono: ['ui-monospace', 'Cascadia Code', 'Consolas', 'monospace'],
+                code: ['ui-monospace', 'Consolas', 'monospace'],
+            },
+            boxShadow: { card: 'var(--shadow)' },
             keyframes: {
-                'scan-line': {
-                    '0%': { transform: 'translateY(-100%)' },
-                    '100%': { transform: 'translateY(1000%)' },
-                },
-                'grid-drift': {
-                    '0%': { backgroundPosition: '0 0' },
-                    '100%': { backgroundPosition: '0 40px' },
-                },
-                'ping-slow': {
-                    '0%': { transform: 'scale(1)', opacity: '0.6' },
-                    '80%, 100%': { transform: 'scale(2.2)', opacity: '0' },
-                },
-                'toast-in': {
-                    '0%': { transform: 'translateY(-8px)', opacity: '0' },
-                    '100%': { transform: 'translateY(0)', opacity: '1' },
-                },
+                enter: { from: { opacity: '0', transform: 'translateY(8px) scale(0.99)' }, to: { opacity: '1', transform: 'translateY(0) scale(1)' } },
+                'drawing-in': { from: { opacity: '0', transform: 'translateX(8px)' }, to: { opacity: '1', transform: 'translateX(0)' } },
+                pulse: { '50%': { opacity: '0.5' } },
             },
             animation: {
-                'scan-line': 'scan-line 4s linear infinite',
-                'grid-drift': 'grid-drift 0.9s linear infinite',
-                'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
-                'toast-in': 'toast-in 0.18s ease-out',
+                enter: 'enter 0.2s ease-out',
+                'drawing-in': 'drawing-in 0.65s ease-out both',
             },
         },
     },
-
-    plugins: [forms],
+    plugins: [
+        forms,
+        plugin(({ addVariant }) => {
+            addVariant('compact', '[data-density="compact"] &');
+            addVariant('motion-reduced', '[data-reduce-motion="true"] &');
+        }),
+    ],
 };

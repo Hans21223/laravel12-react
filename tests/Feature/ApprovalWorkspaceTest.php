@@ -173,7 +173,7 @@ class ApprovalWorkspaceTest extends TestCase
     {
         $user = $this->person();
         $a = $this->create($user);
-        $this->delete('/profile', ['password' => 'password'])->assertSessionHasErrors('password');
+        $this->delete('/profile', ['password' => 'password'])->assertSessionHasErrors(['account' => 'records']);
         $this->assertDatabaseHas('users', ['id' => $user->id]);
         $this->assertDatabaseHas('approval_requests', ['id' => $a['id']]);
     }

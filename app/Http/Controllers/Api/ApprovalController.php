@@ -64,7 +64,7 @@ class ApprovalController extends Controller
 
     public function reviewers(Request $request)
     {
-        return User::organizationManagers()->where('id', '!=', $request->user()->id)
+        return User::organizationManagers()->when(! $request->boolean('include_self'), fn ($q) => $q->where('id', '!=', $request->user()->id))
             ->orderBy('name')->get(['id', 'name', 'department', 'avatar_path']);
     }
 
@@ -212,6 +212,37 @@ class ApprovalController extends Controller
             $action = $status === 'pending' ? 'stage_approved' : $data['decision'];
             $this->event($item, $request->user(), $action, $data['note'] ?? null);
             $this->notify($item, $action, [$item->user_id]);
+
+            return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
+        });
+    }
+
+    // Hand an open review stage to another manager: the assignee may delegate, the organization owner may reroute.
+    public function reassign(Request $request, int $approval, int $step)
+    {
+        $data = $request->validate(['reviewer_id' => 'required|integer']);
+
+        return app(TenantContext::class)->db()->transaction(function () use ($request, $approval, $step, $data) {
+            $item = $this->locked($request, $approval);
+            abort_unless($item->status === 'pending' && $item->route_mode === 'sequential', 409, 'Only active sequential reviews can be reassigned.');
+            $row = $item->steps()->where('round', $item->approval_round)->whereIn('status', ['pending', 'waiting'])->findOrFail($step);
+            $actor = $request->user();
+            $organization = app(TenantContext::class)->organization;
+            $owner = $organization ? $organization->owner_user_id === $actor->id : $actor->role === 'manager';
+            abort_unless($row->reviewer_id === $actor->id || $owner, 403, 'Only the assigned reviewer or the organization owner can reassign this stage.');
+            $reviewer = User::organizationManagers()->whereKey($data['reviewer_id'])->first();
+            $taken = $item->steps()->where('round', $item->approval_round)->where('reviewer_id', $data['reviewer_id'])->exists();
+            if (! $reviewer || $reviewer->id === $item->user_id || $taken) {
+                throw ValidationException::withMessages(['reviewer_id' => 'Choose an active manager who is not the requester or already in this route.']);
+            }
+            $previous = User::find($row->reviewer_id);
+            $row->update(['reviewer_id' => $reviewer->id]);
+            $this->change($item, $item->version, []);
+            $this->event($item, $actor, 'rerouted', ($previous?->name ?? '—').' → '.$reviewer->name);
+            if ($row->status === 'pending') {
+                $this->notify($item, 'submitted', [$reviewer->id]);
+            }
+            $this->notify($item, 'rerouted', [$item->user_id]);
 
             return $item->load('owner', 'reviewer', 'events.actor', 'steps.reviewer', 'attachments');
         });

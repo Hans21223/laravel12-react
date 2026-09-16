@@ -91,4 +91,29 @@ class ApprovalRoutingTest extends TestCase
         $this->assertSoftDeleted('approval_requests', ['id' => $b['id']]);
         $this->assertDatabaseMissing('approval_steps', ['approval_request_id' => $b['id'], 'status' => 'pending']);
     }
+
+    public function test_assignee_or_owner_can_reassign_an_open_stage(): void
+    {
+        $owner = User::factory()->create()->fresh();
+        $first = $this->manager();
+        $second = $this->manager();
+        $substitute = $this->manager();
+        $employee = User::factory()->create()->fresh();
+        $a = $this->actingAs($owner)->postJson('/api/approvals', $this->payload([$first->id, $second->id]))->assertCreated()->json();
+        $url = '/api/approvals/'.$a['id'];
+        $stage = $a['steps'][0]['id'];
+        $this->postJson("$url/steps/$stage/reassign", ['version' => 1, 'reviewer_id' => $substitute->id])->assertForbidden();
+        $this->actingAs($first);
+        foreach ([$owner->id, $employee->id, $second->id, 99999] as $invalid) {
+            $this->postJson("$url/steps/$stage/reassign", ['version' => 1, 'reviewer_id' => $invalid])->assertUnprocessable();
+        }
+        $this->postJson("$url/steps/$stage/reassign", ['version' => 1, 'reviewer_id' => $substitute->id])->assertOk()->assertJsonPath('version', 2)->assertJsonPath('steps.0.reviewer_id', $substitute->id)->assertJsonPath('steps.0.status', 'pending');
+        $this->assertDatabaseHas('approval_notifications', ['user_id' => $substitute->id, 'action' => 'submitted']);
+        $this->assertDatabaseHas('approval_notifications', ['user_id' => $owner->id, 'action' => 'rerouted']);
+        $this->assertDatabaseHas('approval_events', ['approval_request_id' => $a['id'], 'action' => 'rerouted']);
+        $this->postJson("$url/decision", ['version' => 2, 'decision' => 'approved'])->assertForbidden();
+        $this->actingAs($substitute)->postJson("$url/decision", ['version' => 2, 'decision' => 'approved'])->assertOk()->assertJsonPath('steps.1.status', 'pending');
+        $this->postJson("$url/steps/$stage/reassign", ['version' => 3, 'reviewer_id' => $first->id])->assertNotFound();
+        $this->getJson('/api/approvals/reviewers?include_self=1')->assertOk()->assertJsonFragment(['id' => $substitute->id]);
+    }
 }

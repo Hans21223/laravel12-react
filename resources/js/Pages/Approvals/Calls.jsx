@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Avatar, Icon } from './UI';
+import { Avatar, avatarTone, Icon } from './UI';
 import { useLocale } from './i18n';
 
 export function useWorkspaceCalls(user, toast) {
@@ -297,75 +297,65 @@ function CallPanel({
     const { t } = useLocale();
     const incoming = call.recipient_id === user.id && call.status === 'ringing';
     const other = call.caller_id === user.id ? call.recipient : call.caller;
+    const audio = call.mode === 'audio';
+    const dark = 'btn secondary border-[#426081] bg-[#263f5c] text-[#e5edf8]';
+    const hangUp = 'btn danger bg-[#c6424c] text-white';
     return (
         <section
-            className={`call-panel ${call.mode}`}
+            className="fixed bottom-6 right-6 z-[100] w-[420px] max-w-[calc(100vw_-_32px)] overflow-hidden rounded-md border border-t-[3px] border-[#395371] border-t-[#c6424c] bg-[#14273f] text-[12px] text-white [box-shadow:0_20px_80px_#0007] max-sm:bottom-4 max-sm:right-4"
             role="region"
             aria-label={t(call.mode === 'video' ? 'videoCall' : 'voiceCall')}
         >
-            <header>
-                <Icon
-                    name={call.mode === 'video' ? 'video' : 'phone'}
-                    size={18}
-                />
-                <strong>{other?.name}</strong>
-                <span>
-                    {t(
-                        incoming
-                            ? 'incomingCall'
-                            : connection === 'connected'
-                              ? 'callConnected'
-                              : 'callConnecting',
-                    )}
+            <header className="flex items-center gap-2.5 p-4">
+                <Icon name={call.mode === 'video' ? 'video' : 'phone'} size={18} />
+                <strong className="flex-1">{other?.name}</strong>
+                <span className="text-[11px] text-[#a8bfda]">
+                    {t(incoming ? 'incomingCall' : connection === 'connected' ? 'callConnected' : 'callConnecting')}
                 </span>
             </header>
-            <div className="call-stage">
-                {(!remote || call.mode === 'audio') && (
-                    <div className="call-person">
-                        <Avatar name={other?.name} src={other?.avatar_url} />
+            <div className={`relative bg-[#0c1624] ${audio ? 'h-[180px]' : 'h-[245px]'}`}>
+                {(!remote || audio) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px]">
+                        <Avatar
+                            name={other?.name}
+                            src={other?.avatar_url}
+                            className={`size-16 rounded-md text-[24px] ${avatarTone(other?.name)}`}
+                        />
                         <strong>{other?.name}</strong>
                     </div>
                 )}
-                <Stream stream={remote} className="remote-stream" />
-                <Stream stream={local} muted className="local-stream" />
+                <Stream stream={remote} className={audio ? 'size-0' : 'size-full object-contain'} />
+                <Stream
+                    stream={local}
+                    muted
+                    className={
+                        audio
+                            ? 'size-0'
+                            : 'absolute bottom-3 right-3 h-[75px] w-[105px] rounded-[5px] border-2 border-[#537194] bg-[#203853] object-cover'
+                    }
+                />
             </div>
-            <div className="call-controls">
+            <div className="flex flex-wrap justify-center gap-2 p-[15px]">
                 {incoming ? (
                     <>
-                        <button
-                            className="btn primary"
-                            disabled={busy}
-                            onClick={onAccept}
-                        >
+                        <button className="btn primary" disabled={busy} onClick={onAccept}>
                             {t('acceptCall')}
                         </button>
-                        <button
-                            className="btn danger"
-                            disabled={busy}
-                            onClick={() => onEnd('decline')}
-                        >
+                        <button className={hangUp} disabled={busy} onClick={() => onEnd('decline')}>
                             {t('declineCall')}
                         </button>
                     </>
                 ) : (
                     <>
-                        <button
-                            className={`btn secondary ${muted ? 'selected' : ''}`}
-                            disabled={busy}
-                            onClick={onMute}
-                        >
+                        <button className={dark} aria-pressed={muted} disabled={busy} onClick={onMute}>
                             {t(muted ? 'unmute' : 'mute')}
                         </button>
                         {call.mode === 'video' && (
-                            <button
-                                className="btn secondary"
-                                disabled={busy}
-                                onClick={onCamera}
-                            >
+                            <button className={dark} disabled={busy} onClick={onCamera}>
                                 {t(camera ? 'cameraOff' : 'cameraOn')}
                             </button>
                         )}
-                        <button className="btn danger" onClick={() => onEnd()}>
+                        <button className={hangUp} onClick={() => onEnd()}>
                             {t('endCall')}
                         </button>
                     </>

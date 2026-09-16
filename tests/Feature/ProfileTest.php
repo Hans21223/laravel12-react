@@ -14,11 +14,7 @@ class ProfileTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->get('/profile');
-
-        $response->assertOk();
+        $this->actingAs($user)->get('/profile')->assertRedirect('/approvals?view=settings');
     }
 
     public function test_profile_information_can_be_updated(): void

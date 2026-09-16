@@ -190,8 +190,12 @@ class OrganizationIsolationTest extends TestCase
         $url = '/api/organization/members/'.$membership->id;
         $this->actor($owner, $org)->patchJson($url, ['role' => 'employee', 'suspended' => false])->assertConflict();
         $this->patchJson($url, ['role' => 'manager', 'suspended' => true])->assertConflict();
-        $this->actor($reviewer, $org)->postJson('/api/approvals/'.$row['id'].'/decision', ['version' => $row['version'], 'decision' => 'approved'])->assertOk();
-        $this->actor($owner, $org)->patchJson($url, ['role' => 'employee', 'suspended' => false])->assertOk();
+        $backup = User::factory()->create();
+        OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $backup->id, 'role' => 'manager']);
+        $reassign = '/api/approvals/'.$row['id'].'/steps/'.$row['steps'][0]['id'].'/reassign';
+        $this->actor($backup, $org)->postJson($reassign, ['version' => $row['version'], 'reviewer_id' => $backup->id])->assertForbidden();
+        $this->actor($owner, $org)->postJson($reassign, ['version' => $row['version'], 'reviewer_id' => $backup->id])->assertOk()->assertJsonPath('steps.0.reviewer_id', $backup->id);
+        $this->patchJson($url, ['role' => 'employee', 'suspended' => false])->assertOk();
     }
 
     public function test_revoked_and_expired_invites_are_rejected_and_owner_cannot_be_suspended(): void
@@ -209,5 +213,68 @@ class OrganizationIsolationTest extends TestCase
         OrganizationInvite::find($inv['invitation']['id'])->update(['expires_at' => now()->subMinute()]);
         $this->flushSession();
         $this->actingAs($joiner)->postJson('/api/organizations/join', ['invitation_key' => $inv['key']])->assertUnprocessable();
+    }
+
+    public function test_owner_can_rename_transfer_close_and_members_can_leave(): void
+    {
+        $owner = User::factory()->create();
+        $manager = User::factory()->create();
+        $employee = User::factory()->create();
+        $org = $this->organization($owner, 'Lifecycle Team');
+        $managerMembership = OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $manager->id, 'role' => 'manager']);
+        $employeeMembership = OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $employee->id]);
+        $this->actor($employee, $org)->patchJson('/api/organization', ['name' => 'Taken Over'])->assertForbidden();
+        $this->actor($owner, $org)->patchJson('/api/organization', ['name' => 'Lifecycle Division'])->assertOk()->assertJsonPath('name', 'Lifecycle Division');
+        $this->postJson('/api/organization/leave')->assertConflict();
+        $this->postJson('/api/organization/transfer', ['membership' => $employeeMembership->id])->assertNotFound();
+        $this->postJson('/api/organization/transfer', ['membership' => $managerMembership->id])->assertOk()->assertJsonPath('owner_user_id', $manager->id);
+        $this->patchJson('/api/organization', ['name' => 'Not mine anymore'])->assertForbidden();
+        $this->actor($owner, $org)->postJson('/api/organization/leave')->assertNoContent();
+        $this->assertDatabaseMissing('organization_memberships', ['organization_id' => $org->id, 'user_id' => $owner->id]);
+        $this->assertNull($owner->fresh()->active_organization_id);
+        $this->actor($owner, $org)->getJson('/api/approvals')->assertConflict();
+        $this->actor($manager, $org)->deleteJson('/api/organization', ['confirm_name' => 'Wrong name'])->assertUnprocessable();
+        $this->deleteJson('/api/organization', ['confirm_name' => 'Lifecycle Division'])->assertNoContent();
+        $this->assertDatabaseHas('organizations', ['id' => $org->id, 'status' => 'closed']);
+        $this->actor($employee, $org)->getJson('/api/approvals')->assertConflict();
+        $this->flushSession();
+        $this->actingAs($manager->fresh())->delete('/profile', ['password' => 'password'])->assertRedirect('/');
+        $this->assertNull($manager->fresh());
+        $this->assertNull($org->fresh()->owner_user_id);
+    }
+
+    public function test_owners_and_active_members_must_leave_before_deleting_accounts(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $org = $this->organization($owner, 'Account Rules');
+        OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $member->id]);
+        $this->flushSession();
+        $this->actingAs($owner->fresh())->from('/approvals')->delete('/profile', ['password' => 'password'])->assertSessionHasErrors(['account' => 'owner']);
+        $this->actingAs($member->fresh())->from('/approvals')->delete('/profile', ['password' => 'password'])->assertSessionHasErrors(['account' => 'member']);
+        $this->assertNotNull($owner->fresh());
+        $this->assertNotNull($member->fresh());
+    }
+
+    public function test_failed_setups_are_visible_and_can_be_retried_or_removed(): void
+    {
+        if (getenv('AE_TEST_MYSQL')) {
+            $this->markTestSkipped('Uses the local SQLite provisioner.');
+        }
+        $owner = User::factory()->create();
+        config(['tenancy.driver' => 'mysql']);
+        Process::fake(fn () => Process::result(exitCode: 1));
+        $this->actingAs($owner)->postJson('/api/organizations', ['name' => 'Broken Setup'])->assertStatus(503);
+        $this->postJson('/api/organizations', ['name' => 'Second Broken'])->assertStatus(503);
+        $failed = Organization::where('owner_user_id', $owner->id)->where('status', 'failed')->orderBy('id')->get();
+        $this->assertCount(2, $failed);
+        $this->getJson('/api/organizations')->assertOk()->assertJsonCount(2)->assertJsonPath('0.status', 'failed');
+        config(['tenancy.driver' => 'sqlite']);
+        $this->postJson('/api/organizations/'.$failed[0]->id.'/retry')->assertOk()->assertJsonPath('status', 'ready');
+        $this->tenantFiles[] = $failed[0]->fresh()->database_credentials['database'];
+        $this->assertDatabaseHas('organization_memberships', ['organization_id' => $failed[0]->id, 'user_id' => $owner->id, 'role' => 'manager']);
+        $this->deleteJson('/api/organizations/'.$failed[1]->id)->assertNoContent();
+        $this->assertDatabaseMissing('organizations', ['id' => $failed[1]->id]);
+        $this->actingAs(User::factory()->create())->deleteJson('/api/organizations/'.$failed[0]->id)->assertNotFound();
     }
 }

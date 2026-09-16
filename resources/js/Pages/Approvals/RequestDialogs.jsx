@@ -1,14 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useLocale } from './i18n';
-import { Avatar, Badge, Field, Icon, Modal, Priority, TypeIcon } from './UI';
+import {
+    Avatar,
+    avatarTone,
+    Badge,
+    DialogFooter,
+    Field,
+    Icon,
+    Modal,
+    Priority,
+    TypeIcon,
+} from './UI';
 import {
     ApprovalJourney,
+    FormNote,
     RequestAttachments,
     RouteBuilder,
+    SectionLabel,
     canReviewRequest,
     currentSteps,
 } from './Workflow';
+
+const dialogBody = 'p-[25px] max-md:px-[18px] max-md:py-5';
+const confirmText = 'text-[13px] leading-[1.8] text-muted';
+const formGrid = 'grid grid-cols-2 gap-[17px] max-md:gap-[11px]';
+const sectionTitle = '!mx-0 !mb-3 !mt-6 text-[12px] font-semibold';
 
 export function errorText(error, t) {
     return t(
@@ -186,11 +203,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
     );
     return (
         <>
-            <Modal
-                title={t(item ? 'edit' : 'newRequest')}
-                onClose={close}
-                className="request-form"
-            >
+            <Modal title={t(item ? 'edit' : 'newRequest')} onClose={close}>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
@@ -198,11 +211,9 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                     }}
                     noValidate
                 >
-                    <div className="dialog-body">
-                        <div className="form-section-label">
-                            01 <span>{t('requestType')}</span>
-                        </div>
-                        <div className="type-choices">
+                    <div className={dialogBody}>
+                        <SectionLabel number="01">{t('requestType')}</SectionLabel>
+                        <div className="mb-7 grid grid-cols-3 gap-[11px] max-md:gap-[7px]">
                             {['leave', 'budget', 'document'].map((type) => (
                                 <button
                                     type="button"
@@ -210,22 +221,24 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                     disabled={busy}
                                     aria-pressed={form.type === type}
                                     onClick={() => change('type', type)}
-                                    className={`type-choice ${form.type === type ? 'selected' : ''}`}
+                                    className={`relative !rounded border px-3 py-[15px] text-left max-md:px-[9px] max-md:py-3 ${form.type === type ? 'border-[#6288b7] bg-brand-tint' : 'border-line hover:border-[#9eb8a7]'}`}
                                 >
                                     <TypeIcon type={type} />
-                                    <strong>{t(type)}</strong>
-                                    <small>{t(`${type}Hint`)}</small>
+                                    <strong className="mt-[11px] block text-[11px] font-semibold max-md:text-[10px]">
+                                        {t(type)}
+                                    </strong>
+                                    <small className="mt-[3px] block text-[9px] text-muted max-md:text-[8px]">
+                                        {t(`${type}Hint`)}
+                                    </small>
                                     {form.type === type && (
-                                        <span className="type-check">
+                                        <span className="absolute right-2.5 top-2.5 rounded-sm bg-brand p-0.5 text-surface max-md:right-1.5 max-md:top-1.5">
                                             <Icon name="check" size={12} />
                                         </span>
                                     )}
                                 </button>
                             ))}
                         </div>
-                        <div className="form-section-label">
-                            02 <span>{t('details')}</span>
-                        </div>
+                        <SectionLabel number="02">{t('details')}</SectionLabel>
                         <Field label={t('title')} error={errors.title}>
                             {input('title', 'text', {
                                 placeholder: t('titlePlaceholder'),
@@ -260,7 +273,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                             </Field>
                         )}
                         {form.type === 'leave' && (
-                            <div className="form-grid">
+                            <div className={formGrid}>
                                 <Field
                                     label={t('startDate')}
                                     error={errors.start_date}
@@ -288,7 +301,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                 })}
                             </Field>
                         )}
-                        <div className="form-grid">
+                        <div className={formGrid}>
                             <Field label={t('priority')}>
                                 <select
                                     disabled={busy}
@@ -316,20 +329,14 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                         />
                         {item?.status === 'pending' &&
                             item?.route_mode === 'sequential' && (
-                                <p className="route-warning">
+                                <p className="mx-0 my-2.5 text-signal">
                                     {t('restartWarning')}
                                 </p>
                             )}
-                        <p className="form-note">
-                            <Icon name="file" size={15} />
-                            {t('attachAfterDraft')}
-                        </p>
-                        <p className="form-note">
-                            <Icon name="shield" size={15} />
-                            {t('draftHelp')}
-                        </p>
+                        <FormNote icon="file">{t('attachAfterDraft')}</FormNote>
+                        <FormNote icon="shield">{t('draftHelp')}</FormNote>
                     </div>
-                    <div className="dialog-footer">
+                    <DialogFooter>
                         <button
                             type="button"
                             className="btn ghost"
@@ -362,19 +369,19 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                 </button>
                             )}
                         </div>
-                    </div>
+                    </DialogFooter>
                 </form>
             </Modal>
             {discard && (
                 <Modal
                     title={t('unsavedTitle')}
                     onClose={() => setDiscard(false)}
-                    className="confirm-modal"
+                    width="max-w-[460px]"
                 >
-                    <div className="dialog-body">
-                        <p>{t('unsavedHelp')}</p>
+                    <div className={dialogBody}>
+                        <p className={confirmText}>{t('unsavedHelp')}</p>
                     </div>
-                    <div className="dialog-footer">
+                    <DialogFooter>
                         <button
                             className="btn secondary"
                             onClick={() => setDiscard(false)}
@@ -384,7 +391,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                         <button className="btn danger" onClick={onClose}>
                             {t('discard')}
                         </button>
-                    </div>
+                    </DialogFooter>
                 </Modal>
             )}
         </>
@@ -478,79 +485,66 @@ export function RequestDetail({
             <Modal
                 title={`REQ-${String(item.id).padStart(4, '0')}`}
                 onClose={() => !busy && onClose()}
-                className="detail-modal"
+                width="max-w-[720px]"
             >
-                <div className="dialog-body">
-                    <div className="detail-title">
-                        <TypeIcon type={item.type} size={24} />
-                        <div>
-                            <div className="eyebrow">{t(item.type)}</div>
-                            <h2>{item.title}</h2>
+                <div className={dialogBody}>
+                    <div className="flex items-center gap-4">
+                        <TypeIcon type={item.type} size={24} box="lg" />
+                        <div className="min-w-0">
+                            <div className="eyebrow mb-[3px] font-sans text-[10px] tracking-[0.7px]">
+                                {t(item.type)}
+                            </div>
+                            <h2 className="font-technical text-[23px] font-[550] leading-[1.4] tracking-[-0.5px] [overflow-wrap:anywhere] max-md:text-[21px]">
+                                {item.title}
+                            </h2>
                         </div>
                     </div>
-                    <div className="detail-badges">
+                    <div className="mx-0 my-5 flex items-center gap-4 text-[10px] text-muted">
                         <Badge status={item.status} />
                         <Priority value={item.priority} />
-                        <span>
-                            {date(item.created_at, { year: 'numeric' })}
-                        </span>
+                        <span>{date(item.created_at, { year: 'numeric' })}</span>
                     </div>
-                    <div className="detail-people">
-                        <div>
+                    <div className="grid grid-cols-2 gap-[15px] border-y border-y-line px-0 py-5">
+                        <div className="flex items-center gap-2.5">
                             <Avatar
                                 src={item.owner?.avatar_url}
                                 name={item.owner?.name}
+                                className={`size-9 rounded text-[11px] ${avatarTone(item.owner?.name)}`}
                             />
-                            <span>
-                                <small>{t('owner')}</small>
-                                <strong>{item.owner?.name}</strong>
-                            </span>
+                            <Person label={t('owner')} value={item.owner?.name} />
                         </div>
-                        <div>
-                            <span className="reviewer-icon">
+                        <div className="flex items-center gap-2.5">
+                            <span className="grid size-[35px] place-items-center rounded bg-surface-alt text-muted">
                                 <Icon name="shield" />
                             </span>
-                            <span>
-                                <small>{t('reviewer')}</small>
-                                <strong>
-                                    {item.reviewer?.name || t('awaiting')}
-                                </strong>
-                            </span>
+                            <Person
+                                label={t('reviewer')}
+                                value={item.reviewer?.name || t('awaiting')}
+                            />
                         </div>
                     </div>
-                    <h3 className="detail-section-title">{t('description')}</h3>
-                    <p className="detail-description">{item.description}</p>
-                    <div className="detail-facts">
-                        <div>
-                            <small>{t('department')}</small>
-                            <strong>{t(`dept${item.department}`)}</strong>
-                        </div>
-                        <div>
-                            <small>{t('due')}</small>
-                            <strong>
-                                {date(item.due_date, { year: 'numeric' })}
-                            </strong>
-                        </div>
+                    <h3 className={sectionTitle}>{t('description')}</h3>
+                    <p className="whitespace-pre-wrap text-[12px] leading-[1.9] text-muted [overflow-wrap:anywhere]">
+                        {item.description}
+                    </p>
+                    <div className="mt-5 grid grid-cols-2 gap-[19px] rounded-[5px] border border-line bg-surface-alt p-[18px]">
+                        <Fact label={t('department')}>{t(`dept${item.department}`)}</Fact>
+                        <Fact label={t('due')}>{date(item.due_date, { year: 'numeric' })}</Fact>
                         {item.type === 'budget' && (
-                            <div>
-                                <small>{t('budgetNote')}</small>
-                                <strong className="money-value">
-                                    {money(item.amount)}
-                                </strong>
-                            </div>
+                            <Fact label={t('budgetNote')} className="font-technical !text-[22px] !font-[550] text-brand">
+                                {money(item.amount)}
+                            </Fact>
                         )}
                         {item.type === 'leave' && (
-                            <div className="span-two">
-                                <small>{t('leavePeriod')}</small>
-                                <strong>
-                                    {date(item.start_date)} →{' '}
-                                    {date(item.end_date, { year: 'numeric' })}
-                                </strong>
-                            </div>
+                            <Fact label={t('leavePeriod')} wide>
+                                {date(item.start_date)} → {date(item.end_date, { year: 'numeric' })}
+                            </Fact>
                         )}
                         {item.type === 'document' && item.document_url && (
-                            <div className="span-two">
-                                <small>{t('documentUrl')}</small>
+                            <div className="col-span-2">
+                                <small className="mb-[5px] block text-[10px] text-muted">
+                                    {t('documentUrl')}
+                                </small>
                                 <a
                                     href={item.document_url}
                                     target="_blank"
@@ -563,7 +557,12 @@ export function RequestDetail({
                             </div>
                         )}
                     </div>
-                    <ApprovalJourney item={item} user={user} />
+                    <ApprovalJourney
+                        item={item}
+                        user={user}
+                        onChange={onChange}
+                        toast={toast}
+                    />
                     <RequestAttachments
                         item={item}
                         user={user}
@@ -573,27 +572,31 @@ export function RequestDetail({
                         setBusy={setBusy}
                     />
                     {item.decision_note && (
-                        <div className={`decision-note ${item.status}`}>
+                        <div
+                            className={`mt-5 flex gap-2.5 rounded border border-line p-[15px] ${item.status === 'rejected' ? 'bg-[#fbf1ee] text-[#aa7164]' : 'bg-brand-tint text-brand'}`}
+                        >
                             <Icon
-                                name={
-                                    item.status === 'approved'
-                                        ? 'check'
-                                        : 'comment'
-                                }
+                                name={item.status === 'approved' ? 'check' : 'comment'}
                                 size={18}
+                                className="mt-0.5 shrink-0"
                             />
                             <div>
-                                <strong>{t('note')}</strong>
-                                <p>{item.decision_note}</p>
+                                <strong className="text-[11px] font-semibold">{t('note')}</strong>
+                                <p className="mt-1 whitespace-pre-wrap text-[12px] leading-[1.75] [overflow-wrap:anywhere]">
+                                    {item.decision_note}
+                                </p>
                             </div>
                         </div>
                     )}
-                    <h3 className="detail-section-title">{t('history')}</h3>
-                    <div className="timeline">
+                    <h3 className={sectionTitle}>{t('history')}</h3>
+                    <div className="pb-0 pl-[7px] pr-0 pt-px">
                         {item.events?.map((event) => (
-                            <div className="timeline-item" key={event.id}>
+                            <div
+                                className="relative flex gap-[13px] pb-[23px] before:absolute before:bottom-0 before:left-3 before:top-[23px] before:border-l before:border-l-line before:content-[''] last:before:hidden"
+                                key={event.id}
+                            >
                                 <span
-                                    className={`timeline-dot ${event.action}`}
+                                    className={`z-[1] grid size-[25px] shrink-0 place-items-center rounded border border-line ${event.action === 'approved' ? 'bg-brand-tint text-brand' : 'bg-surface-alt text-muted'}`}
                                 >
                                     <Icon
                                         name={
@@ -601,33 +604,40 @@ export function RequestDetail({
                                                 ? 'check'
                                                 : event.action === 'commented'
                                                   ? 'comment'
-                                                  : 'clock'
+                                                  : event.action === 'rerouted'
+                                                    ? 'refresh'
+                                                    : 'clock'
                                         }
                                         size={13}
                                     />
                                 </span>
-                                <div>
-                                    <strong>
+                                <div className="min-w-0 flex-1">
+                                    <strong className="text-[11px] font-[550]">
                                         {t(`${event.action}Action`)}
                                     </strong>
-                                    <small>
+                                    <small className="mt-[3px] block text-[9px] text-muted">
                                         {event.actor?.name || '—'} ·{' '}
                                         {date(event.created_at, {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                         })}
                                     </small>
-                                    {event.body && <p>{event.body}</p>}
+                                    {event.body && (
+                                        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-line bg-surface-alt px-[13px] py-[11px] text-[12px] leading-[1.75] [overflow-wrap:anywhere]">
+                                            {event.body}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <form onSubmit={sendComment} className="comment-form">
+                    <form onSubmit={sendComment}>
                         <label className="sr-only" htmlFor="comment-body">
                             {t('comment')}
                         </label>
                         <textarea
                             id="comment-body"
+                            className="w-full resize-y p-3 !text-[12px]"
                             rows={2}
                             maxLength={2000}
                             value={comment}
@@ -635,8 +645,10 @@ export function RequestDetail({
                             placeholder={t('commentPlaceholder')}
                             disabled={busy}
                         />
-                        <div>
-                            <small>{t('commentsNote')}</small>
+                        <div className="mt-[9px] flex items-center justify-between gap-3.5">
+                            <small className="text-[9px] text-muted max-md:max-w-[200px]">
+                                {t('commentsNote')}
+                            </small>
                             <button
                                 className="btn secondary"
                                 disabled={busy || !comment.trim()}
@@ -647,15 +659,12 @@ export function RequestDetail({
                         </div>
                     </form>
                     {item.status === 'approved' && (
-                        <p className="form-note">
-                            <Icon name="shield" size={15} />
-                            {t('archivedNote')}
-                        </p>
+                        <FormNote icon="shield">{t('archivedNote')}</FormNote>
                     )}
                 </div>
                 {(own || canReview) && (
-                    <div className="dialog-footer detail-actions">
-                        <div>
+                    <DialogFooter className="max-md:flex-wrap max-md:gap-[7px] max-md:[&_.btn]:px-2.5 max-md:[&_.btn]:py-[9px] max-md:[&_.btn]:text-[10px]">
+                        <div className="flex items-center gap-1">
                             {own && item.status !== 'approved' && (
                                 <button
                                     className="icon-button destructive"
@@ -678,27 +687,20 @@ export function RequestDetail({
                             )}
                         </div>
                         <div className="flex gap-2">
-                            {own &&
-                                ['draft', 'pending', 'rejected'].includes(
-                                    item.status,
-                                ) && (
-                                    <button
-                                        className="btn primary"
-                                        disabled={busy}
-                                        onClick={() => onEdit(item)}
-                                    >
-                                        <Icon name="edit" size={16} />
-                                        {t(
-                                            item.status === 'rejected'
-                                                ? 'revision'
-                                                : 'edit',
-                                        )}
-                                    </button>
-                                )}
+                            {own && ['draft', 'pending', 'rejected'].includes(item.status) && (
+                                <button
+                                    className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
+                                    disabled={busy}
+                                    onClick={() => onEdit(item)}
+                                >
+                                    <Icon name="edit" size={16} />
+                                    {t(item.status === 'rejected' ? 'revision' : 'edit')}
+                                </button>
+                            )}
                             {canReview && (
                                 <>
                                     <button
-                                        className="btn reject-button"
+                                        className="btn border-[#f0d6d4] bg-[#fff3f2] text-[#b04f4c]"
                                         disabled={busy}
                                         onClick={() => begin('rejected')}
                                     >
@@ -706,21 +708,17 @@ export function RequestDetail({
                                         {t('reject')}
                                     </button>
                                     <button
-                                        className="btn primary"
+                                        className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
                                         disabled={busy}
                                         onClick={() => begin('approved')}
                                     >
                                         <Icon name="check" size={16} />
-                                        {t(
-                                            item.route_mode === 'sequential'
-                                                ? 'approveStage'
-                                                : 'approve',
-                                        )}
+                                        {t(item.route_mode === 'sequential' ? 'approveStage' : 'approve')}
                                     </button>
                                 </>
                             )}
                         </div>
-                    </div>
+                    </DialogFooter>
                 )}
             </Modal>
             {action && (
@@ -733,10 +731,10 @@ export function RequestDetail({
                               : 'decisionConfirm',
                     )}
                     onClose={() => !busy && setAction(null)}
-                    className="confirm-modal"
+                    width="max-w-[460px]"
                 >
-                    <div className="dialog-body">
-                        <p>
+                    <div className={dialogBody}>
+                        <p className={confirmText}>
                             {t(
                                 action === 'delete'
                                     ? 'deleteHelp'
@@ -749,17 +747,14 @@ export function RequestDetail({
                         </p>
                         {['approved', 'rejected'].includes(action) && (
                             <>
-                                <div className="mt-4 mb-4">
+                                <div className="my-4">
                                     <Badge status={action} />
                                 </div>
                                 <Field
+                                    className="mb-0"
                                     label={t('note')}
                                     error={noteError}
-                                    hint={
-                                        action === 'rejected'
-                                            ? t('rejectNote')
-                                            : null
-                                    }
+                                    hint={action === 'rejected' ? t('rejectNote') : null}
                                 >
                                     <textarea
                                         rows={3}
@@ -776,7 +771,7 @@ export function RequestDetail({
                             </>
                         )}
                     </div>
-                    <div className="dialog-footer">
+                    <DialogFooter>
                         <button
                             className="btn secondary"
                             disabled={busy}
@@ -799,9 +794,29 @@ export function RequestDetail({
                                         : 'confirm',
                             )}
                         </button>
-                    </div>
+                    </DialogFooter>
                 </Modal>
             )}
         </>
+    );
+}
+
+function Person({ label, value }) {
+    return (
+        <span>
+            <small className="block text-[10px] text-muted">{label}</small>
+            <strong className="mt-[3px] block text-[12px] font-medium max-md:text-[11px]">
+                {value}
+            </strong>
+        </span>
+    );
+}
+
+function Fact({ label, children, wide = false, className = '' }) {
+    return (
+        <div className={wide ? 'col-span-2' : ''}>
+            <small className="mb-[5px] block text-[10px] text-muted">{label}</small>
+            <strong className={`text-[12px] font-medium ${className}`}>{children}</strong>
+        </div>
     );
 }

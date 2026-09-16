@@ -14,8 +14,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/organizations', [OrganizationController::class, 'create'])->middleware('throttle:3,60');
     Route::post('/api/organizations/join', [OrganizationController::class, 'join'])->middleware('throttle:10,1');
     Route::post('/api/organizations/{organization}/switch', [OrganizationController::class, 'switch'])->whereNumber('organization');
+    Route::post('/api/organizations/{organization}/retry', [OrganizationController::class, 'retry'])->whereNumber('organization')->middleware('throttle:3,60');
+    Route::delete('/api/organizations/{organization}', [OrganizationController::class, 'discard'])->whereNumber('organization');
     Route::middleware(UseOrganization::class)->prefix('api/organization')->group(function () {
         Route::get('/database', [OrganizationDatabaseController::class, 'index']);
+        Route::patch('/', [OrganizationController::class, 'rename']);
+        Route::delete('/', [OrganizationController::class, 'close'])->middleware('throttle:3,1');
+        Route::post('/transfer', [OrganizationController::class, 'transfer'])->middleware('throttle:6,1');
+        Route::post('/leave', [OrganizationController::class, 'leave'])->middleware('throttle:6,1');
         Route::get('/members', [OrganizationController::class, 'members']);
         Route::patch('/members/{membership}', [OrganizationController::class, 'updateMember'])->whereNumber('membership');
         Route::get('/invites', [OrganizationController::class, 'invites']);
