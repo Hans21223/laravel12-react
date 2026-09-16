@@ -301,8 +301,8 @@ function CallPanel({
     const incoming = call.recipient_id === user.id && call.status === 'ringing';
     const other = call.caller_id === user.id ? call.recipient : call.caller;
     const audio = call.mode === 'audio';
-    const dark = 'btn secondary border-[#426081] bg-[#263f5c] text-[#e5edf8]';
-    const hangUp = 'btn danger bg-[#c6424c] text-white';
+    const dark = 'btn secondary border-[#426081] bg-[#263f5c] text-[#e5edf8] hover:border-[#5a7ca3] hover:bg-[#2f4b6c]';
+    const hangUp = 'btn danger bg-[#c6424c] text-white hover:bg-[#ad3440]';
     return (
         <section
             className="fixed bottom-6 right-6 z-[100] w-[420px] max-w-[calc(100vw_-_32px)] overflow-hidden rounded-md border border-t-[3px] border-[#395371] border-t-[#c6424c] bg-[#14273f] text-[12px] text-white [box-shadow:0_20px_80px_#0007] max-sm:bottom-4 max-sm:right-4"

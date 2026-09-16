@@ -24,3 +24,5 @@ The previously deployed workflow upgrade is commit `47a9cb4`. Its 88 tests / 499
 
 Added organization rename, ownership transfer, leave, close (legacy workspace protected), failed-setup retry/remove, stage reassignment, account deletion rules, Breeze password reset screens, Reverb realtime hints, and the Tailwind migration. Verified with 66 PHPUnit tests, screenshot comparison against the previous UI, and browser flows for each new feature.
 
+Live verification after deployment: forgot-password requests return the same response for known and unknown emails, the served stylesheet is the Tailwind build, the previous verification organization was closed by its owner, and the main Anaheim Electronics workspace refuses to close. Realtime hints reached the recipient in about one second without message content. A relay-only WebRTC video call between two test accounts connected with remote video playing and closed on both sides after hang-up. Two signaling bugs found during that test were fixed: TrimStrings removed the SDP trailing CRLF, and validation dropped ICE candidate media identifiers.
+
