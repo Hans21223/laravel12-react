@@ -161,7 +161,10 @@ class OrganizationIsolationTest extends TestCase
         $this->patchJson('/api/team/calls/'.$id, ['action' => 'accept'])->assertOk()->assertJsonPath('status', 'accepted');
         $this->getJson('/api/team/calls/'.$id)->assertOk()->assertJsonPath('signals.0.payload.sdp', $sdp);
         $this->postJson('/api/team/calls/'.$id.'/signals', ['type' => 'answer', 'payload' => ['sdp' => 'v=0 synthetic answer']])->assertNoContent();
-        $this->patchJson('/api/team/calls/'.$id, ['action' => 'end'])->assertOk();
+        $candidate = ['candidate' => 'candidate:1 1 udp 41885439 203.0.113.9 49200 typ relay', 'sdpMid' => '0', 'sdpMLineIndex' => 0, 'usernameFragment' => 'abcd'];
+        $this->postJson('/api/team/calls/'.$id.'/signals', ['type' => 'ice', 'payload' => $candidate])->assertNoContent();
+        $this->actor($owner, $org)->getJson('/api/team/calls/'.$id)->assertOk()->assertJsonPath('signals.1.payload', $candidate);
+        $this->actor($peer, $org)->patchJson('/api/team/calls/'.$id, ['action' => 'end'])->assertOk();
         $this->actor($owner, $org)->postJson('/api/team/calls/'.$id.'/signals', $offer)->assertConflict();
         $this->getJson('/api/team/calls/'.$id)->assertOk()->assertJsonCount(0, 'signals');
     }

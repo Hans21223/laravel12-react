@@ -105,7 +105,9 @@ class CallController extends Controller
 
     public function signal(Request $r, int $call)
     {
-        $data = $r->validate(['type' => ['required', Rule::in(['offer', 'answer', 'ice'])], 'payload' => 'required|array', 'payload.sdp' => 'required_if:type,offer,answer|string|max:100000', 'payload.candidate' => 'required_if:type,ice|string|max:4096']);
+        $data = $r->validate(['type' => ['required', Rule::in(['offer', 'answer', 'ice'])], 'payload' => 'required|array', 'payload.type' => ['nullable', Rule::in(['offer', 'answer'])], 'payload.sdp' => 'required_if:type,offer,answer|string|max:100000', 'payload.candidate' => 'required_if:type,ice|string|max:4096',
+            // Browsers need the media line identifiers to apply a candidate; unvalidated keys would be dropped.
+            'payload.sdpMid' => 'nullable|string|max:32', 'payload.sdpMLineIndex' => 'nullable|integer|min:0|max:64', 'payload.usernameFragment' => 'nullable|string|max:256']);
         abort_if(strlen(json_encode($data['payload'])) > 110000, 422);
 
         return app(TenantContext::class)->db()->transaction(function () use ($r, $call, $data) {
