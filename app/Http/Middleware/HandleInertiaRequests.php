@@ -36,6 +36,13 @@ class HandleInertiaRequests extends Middleware
             ],
             // ข้อความแจ้งเตือนหลังทำรายการ (แสดงเป็น Toast ฝั่ง React)
             'flash' => fn () => $request->session()->get('flash'),
+            // Public WebSocket settings only; the app secret never leaves the server.
+            'realtime' => fn () => $request->user() && config('broadcasting.default') === 'reverb' && config('broadcasting.connections.reverb.key') ? [
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('broadcasting.connections.reverb.public.host') ?: parse_url(config('app.url'), PHP_URL_HOST),
+                'port' => (int) config('broadcasting.connections.reverb.public.port', 443),
+                'scheme' => config('broadcasting.connections.reverb.public.scheme', 'https'),
+            ] : null,
         ];
     }
 }

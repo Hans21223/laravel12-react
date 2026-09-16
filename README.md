@@ -2,26 +2,62 @@
 
 ระบบจัดการคำร้องขออนุมัติ / 承認申請システム
 
-**Case study 4 · กานต์ ไชยวิเศษสกุล**
+**Case study 4 · กานต์ ไชยวิเศษสกุล** · Live: **https://helldriver.csbootstrap.com**
 
-A complete organizational approval workspace built with **Laravel 12 + React 18 + Inertia 2 + Tailwind CSS**. Request CRUD and workflow actions persist through a same-origin JSON API to a relational database. The new workspace supports English, Thai, and Japanese.
+A multi-organization approval workspace built with **Laravel 12, React 18, Inertia 2, Tailwind CSS and Laravel Breeze authentication**. Employees submit leave, budget and document requests; managers approve or reject them; everyone is notified. Every create, read, update and delete goes through a session-authenticated JSON API into MySQL (SQLite for local development). The interface is available in English, Thai and Japanese.
+
+## Assignment requirements
+
+| Requirement | Where it is implemented |
+| --- | --- |
+| Laravel 12 + React + Inertia | Inertia page shells in `resources/js/Pages/Approvals`, Laravel controllers in `app/Http/Controllers` |
+| Data saved through an API | Axios calls to `/api/approvals`, `/api/organization`, `/api/team`; see [JSON API](#json-api) |
+| Tailwind CSS UI | Design tokens in `tailwind.config.js`; every page uses Tailwind utility classes; shared primitives in `resources/css/app.css` use `@apply` |
+| Laravel Breeze authentication | Breeze controllers in `app/Http/Controllers/Auth`: login, registration, forgot/reset password, email verification, password confirmation |
+| CRUD on the database (10 pts) | `ApprovalController` store/index/show/update/destroy; the in-app **How it works → Run real CRUD demo** runs all four against the database and shows each HTTP status |
+| Employees send requests | Leave, budget and document forms with server validation |
+| Managers approve or reject | Single-manager or sequential multi-stage routes, rejection reasons, reassignment |
+| Notify users of decisions | Database notifications, unread badges, instant WebSocket updates with polling fallback |
+
+## Features
+
+**Requests and approvals**
+- Drafts, submission, editing with optimistic version checks (stale writes return 409), withdrawal, soft deletion, revision and resubmission.
+- Sequential approval routes with 2–4 named reviewers; each stage is recorded, earlier rounds stay visible.
+- **Reassign** an open stage: the assigned reviewer can delegate, the organization owner can reroute.
+- Private attachments (PDF/JPG/PNG/WebP, 2 MB, up to 5), comments and a full activity timeline.
+- Search, filters, sorting, pagination, list and board views, CSV export, insights and charts.
+
+**Organizations (public multi-tenant)**
+- Anyone can register and create an organization; each organization gets **its own MySQL database and credentials**.
+- Joining requires an invitation key: hashed at rest, single- or multi-use, expiring, revocable, optionally locked to one email.
+- Owners rename, **transfer ownership** and **close** organizations; managers promote, demote or suspend members; members **leave**.
+- Failed setups are listed with **Retry** and **Remove**, and do not count toward organization limits.
+- Managers get a read-only **Database** explorer of their own organization's business tables.
+
+**Team**
+- Employee directory, private direct messages (encrypted at rest), and WebRTC voice and video calls through an authenticated TURN relay.
+- **Instant updates** with Laravel Reverb: new messages, approvals and call signals arrive over a private WebSocket channel. Events carry no content, only a hint to refetch through the authorized API.
+
+**Accounts and settings**
+- Profile photo, name, department, language, light/dark/system theme, density, rows per page, default view, reduced motion and "restore defaults".
+- Password change, forgot/reset password (responses never reveal whether an email exists), and account deletion once organizations are transferred, closed or left.
+- **How it works** mode: a visual walkthrough of React → Breeze → organization access → API → MySQL, with per-request server time, SQL query counts and tables (no secrets or bodies recorded).
+
+## Tech stack
+
+| Layer | Choice |
+| --- | --- |
+| Backend | PHP 8.3, Laravel 12, Breeze (Inertia React), Reverb |
+| Frontend | React 18, Inertia 2, Headless UI, Axios, Laravel Echo |
+| Styling | Tailwind CSS 3.4 with project tokens and `@tailwindcss/forms` |
+| Data | MySQL 8 (central registry + one database per organization); SQLite locally and in tests |
+| Realtime and calls | Laravel Reverb (WebSockets), WebRTC with coturn TURN relay |
+| CI/CD | GitHub Actions: tests, real MySQL isolation job, build, SSH deployment with backups |
 
 ## Run locally
 
-Requirements: PHP 8.2+ with SQLite, Composer, Node.js 20.19+ or 22+, and npm. The lockfiles select the installed dependency versions.
-
-For the existing installation, with `.env` and dependencies already present:
-
-```powershell
-php artisan migrate
-php artisan db:seed --class=ApprovalDemoSeeder
-npm run build
-php artisan serve --host=127.0.0.1 --port=8000
-```
-
-Open **http://127.0.0.1:8000**. After building, a Vite dev server is not required. For active development, run `npm run dev` in another terminal.
-
-For a fresh clone, first initialize the application:
+Requirements: PHP 8.2+ with SQLite, Composer, Node.js 20.19+ or 22+, npm.
 
 ```powershell
 composer install
@@ -29,155 +65,95 @@ npm ci
 Copy-Item .env.example .env
 php artisan key:generate
 New-Item database/database.sqlite -ItemType File
+php artisan migrate
+php artisan db:seed --class=ApprovalDemoSeeder
+npm run build
+php artisan serve
 ```
 
-Then run the four commands above. Do not overwrite an existing `.env` or database. Use `migrate`, not `migrate:fresh`, on an existing installation.
+Open http://127.0.0.1:8000. The seeder creates these local-only accounts (password **`AccordDemo2026!`**) and refuses to run in production:
 
-## Demo accounts
+| Account | Role |
+| --- | --- |
+| `karn@accord.test` | Manager |
+| `finance-reviewer@accord.test` | Manager |
+| `maya@accord.test`, `yuki@accord.test`, `narin@accord.test`, `alex@accord.test` | Employees |
 
-The explicit local demo seeder creates these accounts. Password for all: **`AccordDemo2026!`**.
-
-| Account | Role | Department |
-| --- | --- | --- |
-| `karn@accord.test` | Manager | Operations |
-| `maya@accord.test` | Employee | Design |
-| `yuki@accord.test` | Employee | Engineering |
-| `narin@accord.test` | Employee | Marketing |
-| `alex@accord.test` | Employee | Finance |
-
-The seeder is repeatable, preserves existing accounts and requests, and refuses to run in production. New registrations always receive the employee role. The browser cannot promote users to manager. For a real installation, an authorized server administrator must provision manager accounts.
-
-## Anaheim Electronics theme
-
-The interface uses an aerospace corporate identity: an original AE vector monogram, navy/white surfaces, red signal accents, technical grid illustrations, and angular controls. Both light and dark appearances and all three languages use the theme. Local demo credentials remain unchanged.
-
-## Features
-
-- Registration, login, remembered sessions, and logout using Laravel authentication.
-- API-backed create, read, edit, and soft-delete operations.
-- Leave requests with validated date ranges, budget requests with decimal THB amounts, and document approvals with optional HTTP/HTTPS document links.
-- Private drafts, submission, withdrawal, rejection with a required reason, revision, and resubmission.
-- Managers review submitted requests across one organization; they cannot edit employee requests or decide their own requests.
-- Persisted notifications for submissions, decisions, and manager comments; unread state and mark-all-as-read.
-- Per-request history and discussion.
-- Overview, personal requests, approval inbox, list and board views, insights, notifications, settings, and in-app guide.
-- Debounced search, type/status/priority filters, sorting, server pagination, and CSV export of **all matching** requests.
-- Database-derived counts, weekly submission/approval activity, request distribution, approved budget, and overdue counts.
-- EN / ไทย / 日本語; localized dates, numbers, and currency; remembered language and light/dark theme.
-- Responsive layouts, keyboard search (`Ctrl/⌘ K`), new-request shortcut (`N` outside inputs), accessible dialogs, reduced-motion support, validation, retry states, and unsaved-change confirmation.
-- Keyboard-accessible top-right account menu with Settings, notifications, and sign out.
-- Profile photo preview, upload, replacement, and removal (JPG/PNG/WebP, up to 2 MB and 4096 × 4096 pixels). Photos are served through authenticated routes and remain outside the public web directory.
-- Account preferences for light/dark/system appearance, comfortable/compact layouts, 8/16/24 requests per page, preferred list/board view, and reduced motion. Password changes require the current password and a confirmed new password of at least 12 characters.
-
-Notifications and dashboard/list data refresh every **15 seconds while the page is visible**, and after local mutations. This is polling, not WebSocket delivery. Details remain a snapshot while open; stale writes return 409 and require reopening the request. Comments load when opening the request or after posting a comment.
-
-## Assignment rubric
-
-| Requirement | Implementation | Demonstration |
-| --- | --- | --- |
-| 10 points: database CRUD | Controller, Eloquent, migration, authenticated JSON routes | Save a draft, reopen, edit, delete an unapproved request, refresh |
-| Employees submit leave/budget/document requests | Type-specific forms and server validation | Submit each request type |
-| Managers approve/reject | Server-side role, ownership, state, and version checks | Approve one; reject another with a reason |
-| Users receive decision notifications | `approval_notifications` table | Sign in as the employee and open Notifications |
-| Laravel + React + Inertia + API + Tailwind | Inertia shell, Axios JSON CRUD, compiled Tailwind and scoped stylesheet | Inspect network request and database record |
-| 5 points: complete requirements | Workflow, notifications, roles, validation | Follow the demonstration below |
-| 5 points: polished completion | Responsive workspace, 3 languages, charts, themes | Switch language, theme, and mobile viewport |
-
-## Classroom demonstration
-
-1. Sign in as Maya. Create a budget request. Submit an empty form to demonstrate validation; fill in the title, description, and amount, then save a draft.
-2. Close and refresh. Reopen the draft to prove persistence. Edit the amount and submit.
-3. Sign out and sign in as Karn. Open Approval inbox, inspect details/history, add a comment, and approve.
-4. Return as Maya. Open Notifications. The approved request shows the manager, decision, and note. Editing is disabled.
-5. Submit a second request, reject it as the manager with a reason, then revise and resubmit it as the employee.
-6. Create a disposable draft and delete it. It disappears from active lists while its audit remains in the database through soft deletion.
-7. Demonstrate filters, board view, CSV, Thai/Japanese, dark mode, and mobile navigation.
+Optional modes:
+- **Organizations**: set `TENANCY_ENABLED=true`. Locally each new organization gets its own SQLite file under `storage/app/private/tenants`; in production the provisioner creates MySQL databases.
+- **Instant updates**: set `BROADCAST_CONNECTION=reverb`, fill the `REVERB_*` values from `.env.example`, and run `php artisan reverb:start`. Without it the app polls.
+- **Calls**: set `TURN_URL` and `TURN_SECRET` for a coturn server using `use-auth-secret`.
+- **Email** (password reset, verification): the default `MAIL_MAILER=log` writes messages to `storage/logs/laravel.log`. Configure SMTP to deliver them.
 
 ## Architecture
 
 ```text
-Inertia page shell + React controlled forms
-  → Axios /api/approvals (session cookie + XSRF token)
-    → Laravel web middleware → authentication → validation/authorization
-      → controller → database transaction → Eloquent models
-        → approval_requests + approval_events + approval_notifications
-  ← JSON response → React state → immediate UI update
+Browser (React + Inertia + Tailwind)
+  │  Axios JSON + session cookie + XSRF token          Echo WebSocket (private channel)
+  ▼                                                     ▼
+Laravel web middleware → auth (Breeze) → UseOrganization   Reverb ◄─ WorkspaceChanged hint
+  │  membership + organization status checked on every API call
+  ▼
+Controllers → validation/authorization → transaction
+  ├─ Central database: users, organizations, memberships, invites, sessions
+  └─ Tenant database (per organization): approval_requests, steps, events,
+     notifications, attachments, direct_messages, workspace_calls, call_signals
 ```
 
 | Source | Purpose |
 | --- | --- |
-| `routes/approvals.php` | Session-authenticated JSON API and Inertia workspace route |
-| `app/Http/Controllers/Api/ApprovalController.php` | CRUD, queries, workflow, notifications, CSV |
-| `app/Models/ApprovalRequest.php` | Request and visibility scope |
-| `app/Models/ApprovalEvent.php` | Action/comment history |
-| `app/Models/ApprovalNotification.php` | Database notifications |
-| `database/migrations/2026_09_14_000001_create_approval_workspace.php` | Schema and indexes |
-| `database/seeders/ApprovalDemoSeeder.php` | Local sample data |
-| `resources/js/Pages/Approvals/Workspace.jsx` | Navigation, fetching, filters, list/board, settings |
-| `resources/js/Pages/Approvals/Dashboard.jsx` | Statistics, charts, request table |
-| `resources/js/Pages/Approvals/RequestDialogs.jsx` | Forms, details, decisions, discussion |
-| `resources/js/Pages/Approvals/Auth.jsx` | Login and registration |
-| `resources/js/Pages/Approvals/UI.jsx` | Shared components |
-| `resources/js/Pages/Approvals/i18n.jsx` | 287 keys per language and locale formatting |
-| `resources/js/Pages/Approvals/Settings.jsx` | Profile photo, preferences, appearance, and password settings |
-| `resources/css/accord.css` | Responsive design system and themes |
-| `resources/css/anaheim.css` | Anaheim Electronics identity and schematic styling |
-| `tests/Feature/ApprovalWorkspaceTest.php` | Database, permission, transition, conflict tests |
-| `scripts/check-accord-i18n.mjs` | Locale coverage check |
+| `routes/approvals.php`, `routes/organizations.php`, `routes/auth.php`, `routes/channels.php` | API, organization, Breeze and broadcast routes |
+| `app/Http/Controllers/Api/ApprovalController.php` | Request CRUD, decisions, reassignment, notifications, export |
+| `app/Http/Controllers/Api/OrganizationController.php` | Create/join/switch, invites, members, rename, transfer, leave, close, retry |
+| `app/Http/Controllers/Api/TeamController.php`, `CallController.php` | Direct messages and WebRTC signaling |
+| `app/Services/TenantContext.php`, `OrganizationService.php` | Per-organization database connection and provisioning |
+| `app/Support/Realtime.php`, `app/Events/WorkspaceChanged.php` | After-commit, content-free WebSocket hints |
+| `resources/js/Pages/Approvals/*.jsx` | Workspace, dashboard, dialogs, workflow, settings, organizations, messages, calls, debug view |
+| `resources/js/Pages/Approvals/UI.jsx` | Shared Tailwind components (Modal, Field, Badge, Avatar, PageHeading …) |
+| `tailwind.config.js`, `resources/css/app.css` | Design tokens, dark mode variant, component primitives |
+| `resources/js/Pages/Approvals/i18n.jsx` | English, Thai and Japanese dictionaries |
+| `tests/Feature/*` | Database CRUD, permissions, isolation, workflow, realtime channel and account tests |
 
-The previous fleet/simulator pages remain at their existing routes. `/` and `/login` show Anaheim Electronics login; `/dashboard` and `/approvals` show the new workspace. The working checkout is now `C:\laravel12-react`, connected to `Hans21223/laravel12-react` with the original repository history preserved.
+## Tailwind design system
+
+- **Tokens** (`tailwind.config.js`): `canvas`, `surface`, `ink`, `muted`, `line`, `brand`, `signal` and `navy` colors resolve to CSS variables, so the same classes render both light and dark themes. Fonts: `font-sans`, `font-technical`, `font-mono`, `font-code`.
+- **Variants**: `dark:` follows the workspace theme, `compact:` follows the density setting, `motion-reduced:` follows the reduced-motion setting, and `max-md:`/`max-lg:` breakpoints match the layout.
+- **Primitives** (`resources/css/app.css`): `.btn` with `primary`/`secondary`/`ghost`/`danger`, `.icon-button`, `.panel`, `.panel-heading`, `.eyebrow`, `.text-link`. Everything else is utility classes in JSX.
 
 ## JSON API
 
-Prefix: `/api/approvals`. Routes intentionally use Laravel's **web session and CSRF middleware** because this is a same-origin Inertia SPA. They return JSON for CRUD. A bearer token is not necessary for this browser application. Send `Accept: application/json` and use the authenticated session. Axios supplies `X-XSRF-TOKEN` from the same-origin `XSRF-TOKEN` cookie.
+All routes use the same-origin session and CSRF protection; send `Accept: application/json`. Organization routes also require the `X-Organization-ID` header of the active organization.
 
-| Method | Suffix | Purpose |
+| Method | Route | Purpose |
 | --- | --- | --- |
-| GET | `/` | Filtered, sorted, paginated requests |
-| POST | `/` | Create draft or submitted request |
-| GET | `/{id}` | Details/history |
-| PUT | `/{id}` | Owner edits/resubmits |
-| DELETE | `/{id}` | Owner soft-deletes an unapproved request |
-| POST | `/{id}/decision` | Manager approves/rejects |
-| POST | `/{id}/cancel` | Owner withdraws a pending request |
-| POST | `/{id}/comments` | Add a comment |
-| GET | `/summary` | Visible workspace metrics |
-| GET | `/notifications` | Latest 50 notifications and total unread count |
-| PATCH | `/notifications/read` | Mark one or all as read |
-| PATCH | `/preferences` | Own name, department, locale |
-| POST / DELETE | `/profile-photo` | Upload or remove the signed-in user's photo |
-| GET | `/avatars/{user}` | Authenticated profile photo response |
-| PUT | `/password` | Change own password with current-password verification |
-| GET | `/export` | CSV of all matching requests |
+| GET / POST | `/api/approvals` | List (filters, sort, pagination) / create draft or submitted request |
+| GET / PUT / DELETE | `/api/approvals/{id}` | Details / owner edit or resubmit / soft delete |
+| POST | `/api/approvals/{id}/decision` | Approve or reject (manager, current stage) |
+| POST | `/api/approvals/{id}/steps/{step}/reassign` | Hand an open stage to another manager |
+| POST | `/api/approvals/{id}/cancel`, `/comments` | Withdraw, comment |
+| POST / GET / DELETE | `/api/approvals/{id}/attachments[/{file}]` | Private files |
+| GET | `/api/approvals/summary`, `/notifications`, `/export`, `/reviewers` | Metrics, notifications, CSV, eligible managers |
+| PATCH / POST | `/api/approvals/preferences`, `/preferences/reset` | Settings |
+| GET / POST | `/api/organizations`, `/api/organizations/join` | List (incl. failed setups) / create / join with key |
+| POST / DELETE | `/api/organizations/{id}/switch`, `/retry`, `/api/organizations/{id}` | Switch, retry setup, remove failed setup |
+| PATCH / DELETE | `/api/organization` | Rename / close (owner) |
+| POST | `/api/organization/transfer`, `/leave` | Transfer ownership / leave |
+| GET / POST / DELETE | `/api/organization/invites[/{id}]` | Invitation keys (manager) |
+| GET / PATCH | `/api/organization/members[/{id}]` | Directory / role and access (owner) |
+| GET | `/api/organization/database` | Read-only table explorer (manager) |
+| GET / POST | `/api/team/conversations`, `/messages/{peer}` | Direct messages |
+| GET / POST / PATCH | `/api/team/calls[/{id}[/signals]]` | Call lifecycle and signaling |
 
-Example create payload:
+Writes include the last fetched integer `version`; a stale version returns **409**. Owner, role, reviewer and status are assigned by the server, never trusted from the payload.
 
-```json
-{
-  "title": "Design team equipment",
-  "description": "Two drawing tablets for the upcoming design sprint.",
-  "type": "budget",
-  "priority": "normal",
-  "amount": 18000,
-  "due_date": "2026-10-01",
-  "submit": true
-}
-```
+## Security
 
-Edit, deletion, withdrawal, and decision payloads include the last fetched integer `version`. A stale version returns **409**; a successful change increments it. Decisions include `decision: "approved" | "rejected"` and a `note` (required for rejection).
-
-| Transition | Actor | Rule |
-| --- | --- | --- |
-| New → Draft/Pending | Authenticated user | Valid fields |
-| Draft → Pending | Owner | Submit validated draft |
-| Pending → Pending | Owner | Edit with current version |
-| Pending → Approved/Rejected | Another manager | Current version; rejection reason |
-| Pending → Withdrawn | Owner | Current version |
-| Rejected → Draft/Pending | Owner | Revision; earlier decision retained in history |
-| Unapproved → Deleted | Owner | Soft deletion; audit retained |
-| Approved → edit/delete | Nobody through the request API | 409 |
-
-Owner, role, department snapshot, status, reviewer, and version are assigned by the server instead of trusted from create payloads. The legacy account-deletion endpoint prevents deleting an account owning approval records. CSV guards against formula injection. React escapes user text; document links permit only HTTP/HTTPS.
+- Session authentication with CSRF, secure cookies, encrypted sessions, rate limits on login, registration, password reset, invites, messages and calls.
+- Tenant isolation: every organization API call checks an active membership and a matching `X-Organization-ID`; data lives in separate databases with separate credentials.
+- Invitation keys stored as SHA-256 hashes; direct messages and call payloads encrypted at rest; attachments and photos served only through authorized routes.
+- Password reset responses are identical for known and unknown emails; new passwords need 12+ characters with letters and numbers.
+- WebSocket channels are private and authorized per user and organization; broadcasts contain no request or message content.
+- CSV export guards against formula injection; document links allow only HTTP/HTTPS; security headers (`X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`).
 
 ## Checks
 
@@ -187,14 +163,14 @@ npm run build
 php artisan test
 ```
 
-PHPUnit uses its own in-memory SQLite database and does not erase the development database. `.github/workflows/accord-ci.yml` runs these checks on GitHub. Composer resolves dependencies against PHP 8.2 so the lockfile supports the declared minimum and the PHP 8.3 CI runner. Deployment runs the tests and asset build before contacting the server.
+66 tests cover CRUD, permissions, sequential routing and reassignment, attachments, organization isolation and lifecycle, invites, messages, calls, realtime channel authorization and account deletion. `.github/workflows/accord-ci.yml` also runs the isolation and transfer tests against a real MySQL 8 service.
 
-## Server deployment
+## Deployment
 
-Target: **https://helldriver.csbootstrap.com**. The user explicitly requested GitHub publication and deployment. The course PDFs supply technical reference material; their example paths and classroom commands are not executed as instructions.
+Pushing `main` runs `.github/workflows/deploy.yml`: tests and build on GitHub, then one SSH session that snapshots the application, database and files, enters maintenance mode, fast-forwards to the tested commit, migrates every organization database, configures the TURN relay and Reverb (systemd service plus an Nginx `/app/` WebSocket proxy), rebuilds caches and verifies HTTPS, assets and the WebSocket upgrade. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for recovery steps.
 
-`.github/workflows/deploy.yml` deploys tested `main` commits through the existing repository SSH secrets. It uses the verified server directory `/var/www/Helldriver.csbootstrap.com/laravel12-react`, backs up the app and SQLite database, preserves `.env` credentials and existing accounts, applies forward migrations, and checks the public site. See [deployment operations](docs/DEPLOYMENT.md) for recovery and provisioning details.
+## Limits
 
-For a real deployment, configure a database, HTTPS, `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, and `SESSION_SECURE_COOKIE=true`; point the server at `public/`; install locked dependencies; build assets; migrate; and cache configuration. Keep `.env`, database files, and backups out of version control. Back up before migrating. Never seed public demo accounts on a public service. Review access to the older fleet routes before exposing the whole repository.
-
-Current scope: one organization and one decision per request. Notifications are in-app. External email/push, multi-stage approvals, file uploads, multi-tenancy, and SLA escalation are not implemented. Documents use links. Production retention, backups, account provisioning, and department assignment require organizational policies.
+- Email delivery needs an SMTP provider in the server `.env`; until then password-reset and verification emails are written to the log.
+- Calls need UDP access to the TURN relay; restrictive networks may block media.
+- Closing an organization keeps its database for administrator recovery; the app has no permanent purge.

@@ -1,11 +1,29 @@
 """Check public HTTPS responses and deployed assets without user credentials."""
+import base64
 import hashlib
 import html
 import json
+import os
 import re
+import socket
+import ssl
 import time
 import urllib.request
 from pathlib import Path
+
+
+def websocket_status(host):
+    """Reverb answers the upgrade even for an unknown app key, which proves Nginx and the service are running."""
+    request = (
+        f'GET /app/deployment-check?protocol=7&client=js&version=8.4.0 HTTP/1.1\r\nHost: {host}\r\n'
+        'Upgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\n'
+        f'Sec-WebSocket-Key: {base64.b64encode(os.urandom(16)).decode()}\r\nOrigin: https://{host}\r\n\r\n'
+    )
+    with socket.create_connection((host, 443), timeout=15) as raw:
+        with ssl.create_default_context().wrap_socket(raw, server_hostname=host) as tls:
+            tls.sendall(request.encode())
+            return tls.recv(200).decode(errors='replace').split('\r\n')[0]
+
 
 base = 'https://helldriver.csbootstrap.com'
 for attempt in range(3):
@@ -29,7 +47,9 @@ for attempt in range(3):
                 deployed = response.read()
             expected = Path('public/build', file).read_bytes()
             assert hashlib.sha256(deployed).digest() == hashlib.sha256(expected).digest(), 'Asset mismatch: ' + file
-        print('LIVE_PUBLIC_OK: HTTPS health, Anaheim login page, and exact tested frontend assets.')
+        status = websocket_status('helldriver.csbootstrap.com')
+        assert ' 101 ' in status, 'WebSocket upgrade failed: ' + status
+        print('LIVE_PUBLIC_OK: HTTPS health, Anaheim login page, exact tested frontend assets, and WebSocket upgrade.')
         break
     except Exception:
         if attempt == 2:

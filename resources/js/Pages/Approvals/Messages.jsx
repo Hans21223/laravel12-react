@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Avatar, avatarTone, Icon } from './UI';
 import { useLocale } from './i18n';
+import { onRealtime } from '../../realtime';
 
 const merge = (a, b) =>
     [...new Map([...a, ...b].map((row) => [row.id, row])).values()].sort(
@@ -26,7 +27,17 @@ export default function Messages({
         [older, setOlder] = useState(true);
     const scroller = useRef(null),
         stick = useRef(true),
-        cursor = useRef(0);
+        cursor = useRef(0),
+        refreshConversations = useRef(null),
+        refreshMessages = useRef(null);
+    useEffect(
+        () =>
+            onRealtime(['message'], ({ reference }) => {
+                refreshConversations.current?.();
+                if (reference === peer?.id) refreshMessages.current?.();
+            }),
+        [peer?.id],
+    );
     useEffect(() => {
         let active = true;
         const load = () =>
@@ -36,6 +47,7 @@ export default function Messages({
                     if (active) setConversations(data);
                 })
                 .catch(() => {});
+        refreshConversations.current = load;
         load();
         const timer = setInterval(load, 5000);
         return () => {
@@ -84,6 +96,7 @@ export default function Messages({
             }
         }
         load(true);
+        refreshMessages.current = () => load();
         const timer = setInterval(() => {
             if (document.visibilityState === 'visible') load();
         }, 2500);

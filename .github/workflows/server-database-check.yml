@@ -26,3 +26,12 @@ jobs:
             ss -lunt | head -20
             ufw status || true
             ip -4 -brief address
+            echo '--- mail readiness (no secrets) ---'
+            grep -E '^MAIL_(MAILER|HOST|PORT|SCHEME|FROM_ADDRESS)=' /var/www/Helldriver.csbootstrap.com/laravel12-react/.env || true
+            command -v sendmail || true
+            systemctl is-active postfix || true
+            for target in smtp.gmail.com:587 smtp.gmail.com:465 gmail-smtp-in.l.google.com:25 smtp.resend.com:587; do
+              host=${target%:*}; port=${target#*:}
+              if timeout 6 bash -c "</dev/tcp/$host/$port" 2>/dev/null; then echo "OUTBOUND_OPEN $target"; else echo "OUTBOUND_BLOCKED $target"; fi
+            done
+            systemctl is-active ae-reverb || true

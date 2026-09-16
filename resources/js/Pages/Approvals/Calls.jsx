@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Avatar, avatarTone, Icon } from './UI';
 import { useLocale } from './i18n';
+import { onRealtime } from '../../realtime';
 
 export function useWorkspaceCalls(user, toast) {
     const { t } = useLocale();
@@ -214,10 +215,12 @@ export function useWorkspaceCalls(user, toast) {
             }
         }
         const timer = setInterval(poll, 2000);
+        const stopRealtime = onRealtime(['call'], () => poll());
         poll();
         return () => {
             active = false;
             clearInterval(timer);
+            stopRealtime();
             const row = current.current;
             if (row)
                 axios

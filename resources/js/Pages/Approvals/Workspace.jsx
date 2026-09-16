@@ -31,6 +31,7 @@ import {
 import Messages from './Messages';
 import VisualDebug, { useVisualTrace, CrudDemo } from './VisualDebug';
 import { useWorkspaceCalls } from './Calls';
+import { connectRealtime, onRealtime } from '../../realtime';
 
 const views = [
     'organizations',
@@ -758,7 +759,7 @@ function Toasts({ items, onDismiss }) {
     );
 }
 
-function WorkspaceContent({ initialUser }) {
+function WorkspaceContent({ initialUser, realtime }) {
     if (initialUser.organization)
         axios.defaults.headers.common['X-Organization-ID'] = String(
             initialUser.organization.id,
@@ -996,6 +997,28 @@ function WorkspaceContent({ initialUser }) {
         preferences.page_size,
     ]);
     const reload = () => setRefresh((r) => r + 1);
+    const openDetail = useRef(null);
+    openDetail.current = detail?.id;
+    useEffect(() => {
+        if (!realtime) return;
+        let stop,
+            cancelled = false;
+        connectRealtime(realtime, user.organization?.id ?? 0, user.id)
+            .then((disconnect) => (cancelled ? disconnect() : (stop = disconnect)))
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+            stop?.();
+        };
+    }, [realtime?.key, user.id, user.organization?.id]);
+    useEffect(
+        () =>
+            onRealtime(['approvals'], ({ reference }) => {
+                reload();
+                if (reference && openDetail.current === reference) open(reference);
+            }),
+        [],
+    );
     async function open(id) {
         const sequence = ++openSequence.current;
         try {
@@ -1298,10 +1321,10 @@ function WorkspaceContent({ initialUser }) {
 }
 
 export default function Workspace() {
-    const { auth } = usePage().props;
+    const { auth, realtime } = usePage().props;
     return (
         <LocaleProvider initial={auth.user.locale}>
-            <WorkspaceContent initialUser={auth.user} />
+            <WorkspaceContent initialUser={auth.user} realtime={realtime} />
         </LocaleProvider>
     );
 }

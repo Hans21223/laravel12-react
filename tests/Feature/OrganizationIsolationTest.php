@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Events\WorkspaceChanged;
 use App\Models\Organization;
 use App\Models\OrganizationInvite;
 use App\Models\OrganizationMembership;
 use App\Models\User;
 use App\Services\OrganizationService;
 use App\Services\TenantContext;
+use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Process;
 use Tests\TestCase;
 
@@ -276,5 +279,27 @@ class OrganizationIsolationTest extends TestCase
         $this->deleteJson('/api/organizations/'.$failed[1]->id)->assertNoContent();
         $this->assertDatabaseMissing('organizations', ['id' => $failed[1]->id]);
         $this->actingAs(User::factory()->create())->deleteJson('/api/organizations/'.$failed[0]->id)->assertNotFound();
+    }
+
+    public function test_realtime_hints_reach_only_the_recipient_channel(): void
+    {
+        config(['broadcasting.default' => 'reverb', 'broadcasting.connections.reverb.key' => 'test-key', 'broadcasting.connections.reverb.secret' => 'test-secret', 'broadcasting.connections.reverb.app_id' => '1']);
+        // Channels are registered on the broadcaster chosen at boot, so register them again for Reverb.
+        app(BroadcastManager::class)->forgetDrivers();
+        require base_path('routes/channels.php');
+        Event::fake([WorkspaceChanged::class]);
+        $owner = User::factory()->create();
+        $peer = User::factory()->create();
+        $outsider = User::factory()->create();
+        $org = $this->organization($owner, 'Realtime Team');
+        OrganizationMembership::create(['organization_id' => $org->id, 'user_id' => $peer->id]);
+        $this->actor($owner, $org)->postJson('/api/team/messages/'.$peer->id, ['body' => 'Ping over the socket'])->assertCreated();
+        Event::assertDispatched(WorkspaceChanged::class, fn ($event) => $event->user === $peer->id && $event->organization === $org->id && $event->kind === 'message' && ! str_contains(json_encode($event->broadcastWith()), 'Ping'));
+        $channel = 'private-workspace.'.$org->id.'.'.$peer->id;
+        $this->flushSession();
+        $this->actingAs($peer->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => $channel])->assertOk()->assertJsonStructure(['auth']);
+        $this->flushSession();
+        $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => $channel])->assertForbidden();
+        $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => 'private-workspace.'.$org->id.'.'.$outsider->id])->assertForbidden();
     }
 }

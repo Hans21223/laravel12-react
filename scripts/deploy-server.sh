@@ -70,6 +70,8 @@ python3 scripts/enable-mysql.py
 php artisan config:clear
 php scripts/migrate-organizations.php
 python3 scripts/configure-calls.py
+# Realtime is an enhancement: polling keeps the app working if Reverb cannot be configured.
+python3 scripts/configure-realtime.py || echo 'REALTIME_SETUP_FAILED: continuing with polling'
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -79,6 +81,7 @@ find storage bootstrap/cache -type f -exec chmod 664 {} +
 php "$DEPLOY_STAGE/scripts/deploy-database.php" permissions
 php artisan up
 maintenance=0
+systemctl restart ae-reverb.service && sleep 2 && systemctl is-active --quiet ae-reverb.service && echo 'REALTIME_RUNNING' || echo 'REALTIME_UNAVAILABLE: clients fall back to polling'
 trap - ERR
 echo "DEPLOYED_SHA=$DEPLOY_SHA"
 echo "BACKUP_PATH=$backup"
