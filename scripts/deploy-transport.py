@@ -35,6 +35,14 @@ with tempfile.TemporaryDirectory(prefix='anaheim-deploy-') as directory:
         combined = re.fullmatch(r'\s*([^\s:,;]+@[^\s:,;]+)[\s:,;]+(.+?)\s*', password, re.S)
         if combined:
             username, password = combined.groups()
+        # Tolerate common secret-entry slips: surrounding quotes/brackets, or a Gmail name without the domain.
+        username = username.strip().strip('\'"<>').strip()
+        if username and '@' not in username:
+            username += '@gmail.com'
+        if password and not re.fullmatch(r'[^\s\'"]+@[^\s\'"]+', username):
+            space = 'yes' if re.search(r'\s', username) else 'no'
+            quote = 'yes' if re.search(r'[\'"]', username) else 'no'
+            print(f"MAIL_USERNAME_SHAPE: at_signs={username.count('@')} contains_space={space} contains_quote={quote}")
         if password:
             # Only the shape is reported, never the value: Google app passwords are exactly 16 letters.
             print(f"MAIL_SECRET_SHAPE: address_included={'yes' if combined else 'no'} app_password_format={'yes' if re.fullmatch(r'[a-z]{16}', re.sub(r'\s+', '', password)) else 'no'}")
