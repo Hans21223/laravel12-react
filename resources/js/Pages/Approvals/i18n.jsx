@@ -151,6 +151,8 @@ const en = {
     attachmentRules:
         'PDF, JPG, PNG or WebP · up to 2 MB each · 5 files per request.',
     attachmentSaved: 'File attached and saved.',
+    filesDraftSaved:
+        'Saved as a private draft, but a file could not be attached. Add it here, then submit.',
     attachmentRemoved: 'Attachment removed.',
     attachmentLockHelp:
         'Files can be changed in drafts or rejected requests. Submitted files stay fixed for review.',
@@ -676,6 +678,8 @@ const th = {
     attachmentRules:
         'PDF, JPG, PNG หรือ WebP · ไม่เกิน 2 MB ต่อไฟล์ · สูงสุด 5 ไฟล์ต่อคำร้อง',
     attachmentSaved: 'บันทึกไฟล์แนบแล้ว',
+    filesDraftSaved:
+        'บันทึกเป็นฉบับร่างส่วนตัวแล้ว แต่แนบไฟล์บางไฟล์ไม่สำเร็จ เพิ่มไฟล์ที่นี่แล้วส่งคำร้อง',
     attachmentRemoved: 'ลบไฟล์แนบแล้ว',
     attachmentLockHelp:
         'แก้ไขไฟล์ได้เมื่อเป็นฉบับร่างหรือถูกปฏิเสธ ไฟล์ที่ส่งแล้วจะถูกล็อกระหว่างพิจารณา',
@@ -1195,6 +1199,8 @@ const ja = {
     addAttachment: '添付ファイルを選択',
     attachmentRules: 'PDF・JPG・PNG・WebP、各2 MBまで、1申請につき5件まで。',
     attachmentSaved: '添付ファイルを保存しました。',
+    filesDraftSaved:
+        '非公開の下書きとして保存しましたが、添付できなかったファイルがあります。ここで追加してから提出してください。',
     attachmentRemoved: '添付ファイルを削除しました。',
     attachmentLockHelp:
         '下書きまたは却下された申請で変更できます。提出後のファイルは固定されます。',

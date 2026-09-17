@@ -53,7 +53,7 @@ const empty = {
     reviewer_ids: [],
 };
 export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
-    const { t } = useLocale();
+    const { t, number } = useLocale();
     const [form, setForm] = useState(() =>
         Object.fromEntries(
             Object.keys(empty).map((k) => [
@@ -71,7 +71,20 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
     const [errors, setErrors] = useState({});
     const [busy, setBusy] = useState(false);
     const [discard, setDiscard] = useState(false);
-    const dirty = JSON.stringify(form) !== baseline;
+    const [files, setFiles] = useState([]);
+    const dirty = JSON.stringify(form) !== baseline || files.length > 0;
+    function pickFiles(event) {
+        const chosen = [...event.target.files];
+        event.target.value = '';
+        const valid = chosen.filter(
+            (file) =>
+                file.size <= 2 * 1024 * 1024 &&
+                /\.(pdf|jpe?g|png|webp)$/i.test(file.name),
+        );
+        if (valid.length < chosen.length || files.length + valid.length > 5)
+            toast(t('attachmentRules'), 'error');
+        setFiles([...files, ...valid].slice(0, 5));
+    }
     const change = (key, value) => {
         setForm((f) => ({ ...f, [key]: value }));
         setErrors((e) => ({ ...e, [key]: null }));
@@ -135,6 +148,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
         setErrors(errs);
         if (Object.keys(errs).length) return;
         setBusy(true);
+        let draft = null;
         try {
             const payload = {
                 ...form,
@@ -143,10 +157,36 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                 submit,
                 version: item?.version,
             };
-            const { data } = await axios[item ? 'put' : 'post'](
-                `/api/approvals${item ? `/${item.id}` : ''}`,
-                payload,
-            );
+            let data;
+            if (item || !files.length) {
+                ({ data } = await axios[item ? 'put' : 'post'](
+                    `/api/approvals${item ? `/${item.id}` : ''}`,
+                    payload,
+                ));
+            } else {
+                // Files attach to a saved request: create a private draft, add them, then submit it.
+                ({ data: draft } = await axios.post('/api/approvals', {
+                    ...payload,
+                    submit: false,
+                }));
+                for (const file of files) {
+                    const body = new FormData();
+                    body.append('file', file);
+                    body.append('version', draft.version);
+                    ({ data: draft } = await axios.post(
+                        `/api/approvals/${draft.id}/attachments`,
+                        body,
+                    ));
+                }
+                data = submit
+                    ? (
+                          await axios.put(`/api/approvals/${draft.id}`, {
+                              ...payload,
+                              version: draft.version,
+                          })
+                      ).data
+                    : draft;
+            }
             toast(
                 t(
                     submit
@@ -158,6 +198,12 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
             );
             onSaved(data);
         } catch (error) {
+            if (draft) {
+                // Open the saved draft so the remaining files are added there instead of creating a duplicate.
+                toast(t('filesDraftSaved'), 'error');
+                onSaved(draft);
+                return;
+            }
             const server = error.response?.data.errors;
             if (server)
                 setErrors(
@@ -333,7 +379,61 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                     {t('restartWarning')}
                                 </p>
                             )}
-                        <FormNote icon="file">{t('attachAfterDraft')}</FormNote>
+                        {item ? (
+                            <FormNote icon="file">
+                                {t('attachAfterDraft')}
+                            </FormNote>
+                        ) : (
+                            <section className="mt-6" aria-label={t('attachments')}>
+                                <SectionLabel number="04">
+                                    {t('attachments')} · {files.length}/5
+                                </SectionLabel>
+                                {files.map((file, index) => (
+                                    <div
+                                        key={`${file.name}-${index}`}
+                                        className="mb-2 flex items-center gap-3 rounded border border-line bg-surface px-3 py-2"
+                                    >
+                                        <span className="shrink-0 bg-brand-tint px-[7px] py-1.5 text-brand [font:600_10px_ui-monospace,monospace]">
+                                            {file.name.split('.').pop().toUpperCase().slice(0, 4)}
+                                        </span>
+                                        <span className="min-w-0 flex-1 truncate font-semibold">
+                                            {file.name}
+                                        </span>
+                                        <small className="shrink-0 text-muted">
+                                            {number(Math.ceil(file.size / 1024))} KB
+                                        </small>
+                                        <button
+                                            type="button"
+                                            className="icon-button destructive"
+                                            disabled={busy}
+                                            aria-label={`${t('delete')} ${file.name}`}
+                                            onClick={() =>
+                                                setFiles(files.filter((_, i) => i !== index))
+                                            }
+                                        >
+                                            <Icon name="trash" size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {files.length < 5 && (
+                                    <label
+                                        className={`flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-brand bg-surface-alt px-4 py-3.5 text-brand focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand hover:bg-brand-tint ${busy ? 'cursor-wait opacity-50' : ''}`}
+                                    >
+                                        <Icon name="plus" size={16} />
+                                        <strong>{t('addAttachment')}</strong>
+                                        <input
+                                            className="sr-only"
+                                            type="file"
+                                            multiple
+                                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                            disabled={busy}
+                                            onChange={pickFiles}
+                                        />
+                                    </label>
+                                )}
+                                <FormNote icon="file">{t('attachmentRules')}</FormNote>
+                            </section>
+                        )}
                         <FormNote icon="shield">{t('draftHelp')}</FormNote>
                     </div>
                     <DialogFooter>
