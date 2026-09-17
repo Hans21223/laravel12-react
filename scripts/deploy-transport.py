@@ -35,6 +35,9 @@ with tempfile.TemporaryDirectory(prefix='anaheim-deploy-') as directory:
         combined = re.fullmatch(r'\s*([^\s:,;]+@[^\s:,;]+)[\s:,;]+(.+?)\s*', password, re.S)
         if combined:
             username, password = combined.groups()
+        if password:
+            # Only the shape is reported, never the value: Google app passwords are exactly 16 letters.
+            print(f"MAIL_SECRET_SHAPE: address_included={'yes' if combined else 'no'} app_password_format={'yes' if re.fullmatch(r'[a-z]{16}', re.sub(r'\s+', '', password)) else 'no'}")
         mail = json.dumps({'username': username if password else '', 'password': password}).encode()
         info = tarfile.TarInfo('mail-credentials.json')
         info.size, info.mode = len(mail), 0o600
