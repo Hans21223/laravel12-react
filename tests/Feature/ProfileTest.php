@@ -92,4 +92,13 @@ class ProfileTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_language_choice_is_saved_to_the_account(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patchJson('/api/locale', ['locale' => 'th'])->assertNoContent();
+        $this->assertSame('th', $user->fresh()->locale);
+        $this->patchJson('/api/locale', ['locale' => 'fr'])->assertUnprocessable();
+    }
 }

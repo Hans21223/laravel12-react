@@ -291,13 +291,14 @@ export function Avatar({ name = '', small = false, src, className }) {
         </span>
     );
 }
-export function LanguagePicker() {
+export function LanguagePicker({ className = 'text-ink' }) {
     const { locale, setLocale, t } = useLocale();
     return (
         <div className="flex items-center gap-1 text-muted">
             <Icon name="globe" size={17} />
+            {/* Options get their own colors: the open list is not drawn on the picker's background. */}
             <select
-                className="min-w-[62px] rounded !border-0 !bg-transparent bg-[length:12px] bg-[position:right_3px_center] !py-[5px] !pl-[3px] !pr-[22px] !text-[11px] text-ink"
+                className={`min-w-[62px] rounded !border-0 !bg-transparent bg-[length:12px] bg-[position:right_3px_center] !py-[5px] !pl-[3px] !pr-[22px] !text-[11px] [&>option]:bg-surface [&>option]:text-ink ${className}`}
                 aria-label={t('language')}
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}

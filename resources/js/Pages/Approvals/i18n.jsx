@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const en = {
@@ -1577,6 +1578,11 @@ export function LocaleProvider({ children, initial }) {
     const [locale, setLocale] = useState(
         () => initial || localStorage.getItem('accord.locale') || 'en',
     );
+    // Signed-in pages start from the account's language, so a new choice is saved there too.
+    const choose = (next) => {
+        setLocale(next);
+        if (initial) axios.patch('/api/locale', { locale: next }).catch(() => {});
+    };
     const validLocale = dictionaries[locale] ? locale : 'en';
     useEffect(() => {
         localStorage.setItem('accord.locale', validLocale);
@@ -1603,7 +1609,7 @@ export function LocaleProvider({ children, initial }) {
         }).format(value || 0);
     return (
         <Context.Provider
-            value={{ locale: validLocale, setLocale, t, date, number, money }}
+            value={{ locale: validLocale, setLocale: choose, t, date, number, money }}
         >
             {children}
         </Context.Provider>

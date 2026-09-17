@@ -8,10 +8,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileSettingsController extends Controller
 {
+    // The language picker saves immediately; it works before an organization is chosen.
+    public function locale(Request $request)
+    {
+        $request->user()->forceFill($request->validate(['locale' => ['required', Rule::in(['en', 'th', 'ja'])]]))->save();
+
+        return response()->noContent();
+    }
+
     public function upload(Request $request)
     {
         $request->validate(['photo' => 'required|file|image|mimes:jpg,jpeg,png,webp|max:2048|dimensions:max_width=4096,max_height=4096']);

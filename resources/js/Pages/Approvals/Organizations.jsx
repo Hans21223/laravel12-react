@@ -205,7 +205,7 @@ function Content({ user }) {
             <header className="flex items-center justify-between gap-5 bg-[#14273f] px-[5vw] py-[22px] text-white max-sm:flex-wrap max-sm:p-5">
                 <Logo />
                 <div className="flex items-center gap-[15px]">
-                    <LanguagePicker />
+                    <LanguagePicker className="!text-white" />
                     <button className="btn ghost" onClick={() => router.post('/logout')}>
                         {t('signOut')}
                     </button>
