@@ -171,6 +171,6 @@ Pushing `main` runs `.github/workflows/deploy.yml`: tests and build on GitHub, t
 
 ## Limits
 
-- Email is sent through the server's local mail transfer agent; without SPF/DKIM records for the domain some providers may file it as spam. Set SMTP credentials in `.env` for guaranteed delivery.
+- Email needs the `AE_MAIL_USERNAME`/`AE_MAIL_PASSWORD` repository secrets (Gmail SMTP with an App Password) to reach Gmail; without them the server's local mail agent is used and Gmail rejects it because the domain has no SPF/DKIM records.
 - Calls need UDP access to the TURN relay; restrictive networks may block media.
 - Closing an organization keeps its database for administrator recovery; the app has no permanent purge.

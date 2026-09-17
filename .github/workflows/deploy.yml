@@ -39,6 +39,8 @@ jobs:
           DEPLOY_SHA: ${{ github.sha }}
           DEPLOY_STAGE: /tmp/anaheim-${{ github.run_id }}-${{ github.run_attempt }}
           INITIAL_MANAGER_HASH: ${{ secrets.AE_INITIAL_MANAGER_HASH }}
+          AE_MAIL_USERNAME: ${{ secrets.AE_MAIL_USERNAME }}
+          AE_MAIL_PASSWORD: ${{ secrets.AE_MAIL_PASSWORD }}
         run: python3 scripts/deploy-transport.py
       - name: Verify the public application
         run: python3 scripts/check-deployment.py

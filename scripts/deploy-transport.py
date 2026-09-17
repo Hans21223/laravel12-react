@@ -1,5 +1,6 @@
 """Transfer verified build assets and execute deployment over a single SSH session."""
 import io
+import json
 import os
 import re
 import shlex
@@ -28,14 +29,20 @@ with tempfile.TemporaryDirectory(prefix='anaheim-deploy-') as directory:
         info = tarfile.TarInfo('initial-manager.hash')
         info.size, info.mode = len(secret), 0o600
         archive.addfile(info, io.BytesIO(secret))
+        # Optional SMTP credentials travel inside the SSH stream and are removed right after configuration.
+        mail = json.dumps({'username': os.environ.get('AE_MAIL_USERNAME', ''), 'password': os.environ.get('AE_MAIL_PASSWORD', '')}).encode()
+        info = tarfile.TarInfo('mail-credentials.json')
+        info.size, info.mode = len(mail), 0o600
+        archive.addfile(info, io.BytesIO(mail))
     quoted_stage = shlex.quote(stage)
     command = (
         f'set -eu; umask 077; mkdir -p {quoted_stage}; '
         f'tar -xzf - -C {quoted_stage}; '
-        f'export DEPLOY_SHA={shlex.quote(sha)} DEPLOY_STAGE={quoted_stage}; '
+        f'export DEPLOY_SHA={shlex.quote(sha)} DEPLOY_STAGE={quoted_stage} AE_MAIL_CREDENTIALS={quoted_stage}/mail-credentials.json; '
         f'export INITIAL_MANAGER_HASH="$(cat {quoted_stage}/initial-manager.hash)"; '
         f'rm -- {quoted_stage}/initial-manager.hash; '
-        f'bash {quoted_stage}/scripts/deploy-server.sh'
+        f'status=0; bash {quoted_stage}/scripts/deploy-server.sh || status=$?; '
+        f'rm -f -- {quoted_stage}/mail-credentials.json; exit $status'
     )
     with bundle.open('rb') as source:
         subprocess.run([

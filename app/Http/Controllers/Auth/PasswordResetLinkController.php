@@ -32,7 +32,8 @@ class PasswordResetLinkController extends Controller
         ]);
 
         // The same response for known, unknown, and throttled addresses avoids revealing which emails have accounts.
-        Password::sendResetLink($request->only('email'));
+        // A mail-server failure is logged instead of turning into an error page that would reveal the account exists.
+        rescue(fn () => Password::sendResetLink($request->only('email')));
 
         return back()->with('status', 'reset-link-sent');
     }

@@ -22,7 +22,7 @@ The user designated `karn@accord.test` as manager. If absent, the first deployme
 
 `scripts/configure-realtime.py` keeps Reverb credentials in `.env` (generated once), runs `php artisan reverb:start` as the `ae-reverb` systemd service on `127.0.0.1:8391` under `www-data`, and adds a `location /app/` WebSocket proxy to the verified Nginx server block after backing it up and validating with `nginx -t`. Browsers connect to `wss://helldriver.csbootstrap.com/app/…`; channels are private and events contain no content. If Reverb is unavailable the deployment continues, requests are unaffected, and clients keep polling. Check it with `systemctl status ae-reverb`.
 
-`scripts/configure-mail.py` switches `MAIL_MAILER` from `log` to the local Postfix `sendmail` with a `no-reply@helldriver.csbootstrap.com` sender. It never overrides a mailer that is already configured; set SMTP credentials in `.env` to use a provider instead.
+`scripts/configure-mail.py` sends mail through authenticated SMTP when the repository secrets `AE_MAIL_USERNAME` (a Gmail address) and `AE_MAIL_PASSWORD` (a Google App Password for that account) exist; the deploy streams them over SSH in a 0600 file that is deleted right after `.env` is updated. Without the secrets it falls back to the local Postfix `sendmail`, which Gmail rejects (550-5.7.26) because `csbootstrap.com` has no SPF/DKIM records.
 
 ## Backups and failure recovery
 
