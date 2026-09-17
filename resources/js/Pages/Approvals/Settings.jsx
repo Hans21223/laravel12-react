@@ -15,7 +15,7 @@ export const defaultPreferences = {
 };
 
 const body = 'p-[25px] max-md:p-5 max-xs:p-[19px] [&>.btn]:mt-1';
-const hint = 'm-0 text-[12px] leading-[1.6] text-muted';
+const hint = 'm-0 mb-4 text-[12px] leading-[1.6] text-muted';
 const errorLine = 'mt-2 block text-[12px] text-[#d14858]';
 
 function Card({ title, icon, children, className = '' }) {
@@ -32,7 +32,7 @@ function Card({ title, icon, children, className = '' }) {
 
 function Toggle({ label, help, checked, onChange }) {
     return (
-        <label className="mt-5 flex cursor-pointer items-center justify-between gap-[18px]">
+        <label className="mt-5 flex cursor-pointer first:mt-0 items-center justify-between gap-[18px]">
             <span>
                 <strong className="block text-[13px] font-semibold">{label}</strong>
                 <small className="mt-[5px] block text-[12px] leading-normal text-muted">{help}</small>
@@ -322,149 +322,146 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
         </button>
     );
     return (
-        <div className="grid max-w-[1000px] grid-cols-[1.15fr_1fr] gap-6 max-lg:grid-cols-1">
-            <div>
-                <form onSubmit={save} id="profile-settings-form">
-                    <Card title={t('profile')} icon="user">
-                        <div className={body}>
-                            <ProfilePhoto user={user} setUser={setUser} toast={toast} />
-                            <Field label={t('fullName')}>
-                                <input required minLength={1} maxLength={100} value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} />
-                            </Field>
-                            <Field label={t('email')}>
-                                <input value={user.email} disabled type="email" />
-                            </Field>
-                            <Field label={t('department')}>
-                                <select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                                    {['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'].map((d) => (
-                                        <option key={d} value={d}>
-                                            {t(`dept${d}`)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </Field>
-                            <Field label={t('language')}>
-                                <select value={locale} onChange={(e) => setLocale(e.target.value)}>
-                                    <option value="en">English</option>
-                                    <option value="th">ไทย</option>
-                                    <option value="ja">日本語</option>
-                                </select>
-                            </Field>
-                            <button className="btn primary" disabled={busy || !name.trim()}>
-                                {t(busy ? 'working' : 'save')}
-                            </button>
-                        </div>
-                    </Card>
-                </form>
-                <PasswordSettings toast={toast} />
-                <DeleteAccount />
-            </div>
-            <div>
-                <Card title={t('appearance')} icon="sun">
-                    <div className="flex gap-2 px-[23px] pb-0 pt-[23px] max-xs:px-[19px] max-xs:pt-[19px]">
-                        {['light', 'dark', 'system'].map((mode) => (
-                            <button
-                                key={mode}
-                                type="button"
-                                onClick={() => setTheme(mode)}
-                                aria-pressed={theme === mode}
-                                className={`min-w-0 flex-1 rounded-lg border p-2 ${theme === mode ? 'border-brand bg-brand-tint' : 'border-line'}`}
-                            >
-                                <div
-                                    className={`flex h-[68px] overflow-hidden rounded-[5px] border [&>div>i]:mb-1.5 [&>div>i]:block [&>div>i]:h-3 [&>div>i]:rounded-sm [&>div>i]:border [&>i]:h-full [&>i]:w-1/4 ${mode === 'light' ? '[&>div>i]:border-[#dde4ed] [&>div>i]:bg-white [&>i]:bg-[#1e3452]' : ''} ${themePreview[mode]}`}
-                                >
-                                    <i />
-                                    <div className="flex-1 px-[9px] py-3">
-                                        <i />
-                                        <i />
-                                        <i />
-                                    </div>
-                                </div>
-                                <span className="flex flex-wrap items-center gap-[5px] px-1 pb-[3px] pt-[11px] text-[11px]">
-                                    <Icon name={{ light: 'sun', dark: 'moon', system: 'monitor' }[mode]} size={16} />
-                                    {t(mode)}
-                                    {theme === mode && <Icon name="check" size={16} className="ml-auto" />}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                    <div className={`${body} pt-5`}>
-                        <Field label={t('density')}>
-                            <select value={preferences.density} onChange={(e) => change('density', e.target.value)}>
-                                {['comfortable', 'compact'].map((value) => (
-                                    <option key={value} value={value}>
-                                        {t(value)}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-                        <Toggle
-                            label={t('reduceMotion')}
-                            help={t('reduceMotionHelp')}
-                            checked={preferences.reduce_motion}
-                            onChange={(value) => change('reduce_motion', value)}
-                        />
-                    </div>
-                </Card>
-                <Card title={t('requestPreferences')} icon="list">
+        // Cards flow into as many columns as the screen fits, so wide screens have no empty band.
+        <div className="gap-6 lg:columns-2 2xl:columns-3 [&_section]:break-inside-avoid">
+            <form onSubmit={save} id="profile-settings-form">
+                <Card title={t('profile')} icon="user">
                     <div className={body}>
-                        <Field label={t('rowsPerPage')}>
-                            <select value={preferences.page_size} onChange={(e) => change('page_size', Number(e.target.value))}>
-                                {[8, 16, 24].map((size) => (
-                                    <option key={size} value={size}>
-                                        {size}
+                        <ProfilePhoto user={user} setUser={setUser} toast={toast} />
+                        <Field label={t('fullName')}>
+                            <input required minLength={1} maxLength={100} value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} />
+                        </Field>
+                        <Field label={t('email')}>
+                            <input value={user.email} disabled type="email" />
+                        </Field>
+                        <Field label={t('department')}>
+                            <select value={department} onChange={(e) => setDepartment(e.target.value)}>
+                                {['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'].map((d) => (
+                                    <option key={d} value={d}>
+                                        {t(`dept${d}`)}
                                     </option>
                                 ))}
                             </select>
                         </Field>
-                        <Field label={t('defaultView')}>
-                            <select value={preferences.default_view} onChange={(e) => change('default_view', e.target.value)}>
-                                {['list', 'board'].map((value) => (
-                                    <option key={value} value={value}>
-                                        {t(value)}
-                                    </option>
-                                ))}
+                        <Field label={t('language')}>
+                            <select value={locale} onChange={(e) => setLocale(e.target.value)}>
+                                <option value="en">English</option>
+                                <option value="th">ไทย</option>
+                                <option value="ja">日本語</option>
                             </select>
                         </Field>
-                        <p className={hint}>{t('preferencesHelp')}</p>
-                        {saveButton}
-                    </div>
-                </Card>
-                {user.tenancy_enabled && (
-                    <Card title={t('visualDebug')} icon="monitor">
-                        <div className={body}>
-                            <Toggle
-                                label={t('traceEnabled')}
-                                help={t('enableDebugHelp')}
-                                checked={preferences.visual_debug}
-                                onChange={(value) => change('visual_debug', value)}
-                            />
-                            <button type="submit" form="profile-settings-form" className="btn primary" disabled={busy}>
-                                {t('save')}
-                            </button>
-                        </div>
-                    </Card>
-                )}
-                <Card title={t('resetSettings')} icon="refresh">
-                    <div className={body}>
-                        <p className={hint}>{t('resetSettingsHelp')}</p>
-                        <button type="button" className="btn secondary" disabled={busy} onClick={restoreDefaults}>
-                            {t('restoreDefaults')}
+                        <button className="btn primary" disabled={busy || !name.trim()}>
+                            {t(busy ? 'working' : 'save')}
                         </button>
                     </div>
                 </Card>
-                <section className="panel mb-6 p-[25px]">
-                    <Icon name="shield" size={26} className="mb-[13px] text-brand" />
-                    <h3 className="text-[13px] font-semibold">
-                        {t('accountRole')}: {t(user.role)}
-                    </h3>
-                    <p className="mb-5 mt-1.5 text-[12px] text-muted">{t('roleHelp')}</p>
-                    <button className="btn secondary text-[#b26169]" onClick={() => router.post('/logout')}>
-                        <Icon name="logout" size={17} />
-                        {t('logout')}
+            </form>
+            <PasswordSettings toast={toast} />
+            <Card title={t('appearance')} icon="sun">
+                <div className="flex gap-2 px-[23px] pb-0 pt-[23px] max-xs:px-[19px] max-xs:pt-[19px]">
+                    {['light', 'dark', 'system'].map((mode) => (
+                        <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setTheme(mode)}
+                            aria-pressed={theme === mode}
+                            className={`min-w-0 flex-1 rounded-lg border p-2 ${theme === mode ? 'border-brand bg-brand-tint' : 'border-line'}`}
+                        >
+                            <div
+                                className={`flex h-[68px] overflow-hidden rounded-[5px] border [&>div>i]:mb-1.5 [&>div>i]:block [&>div>i]:h-3 [&>div>i]:rounded-sm [&>div>i]:border [&>i]:h-full [&>i]:w-1/4 ${mode === 'light' ? '[&>div>i]:border-[#dde4ed] [&>div>i]:bg-white [&>i]:bg-[#1e3452]' : ''} ${themePreview[mode]}`}
+                            >
+                                <i />
+                                <div className="flex-1 px-[9px] py-3">
+                                    <i />
+                                    <i />
+                                    <i />
+                                </div>
+                            </div>
+                            <span className="flex flex-wrap items-center gap-[5px] px-1 pb-[3px] pt-[11px] text-[11px]">
+                                <Icon name={{ light: 'sun', dark: 'moon', system: 'monitor' }[mode]} size={16} />
+                                {t(mode)}
+                                {theme === mode && <Icon name="check" size={16} className="ml-auto" />}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+                <div className={`${body} pt-5`}>
+                    <Field label={t('density')}>
+                        <select value={preferences.density} onChange={(e) => change('density', e.target.value)}>
+                            {['comfortable', 'compact'].map((value) => (
+                                <option key={value} value={value}>
+                                    {t(value)}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Toggle
+                        label={t('reduceMotion')}
+                        help={t('reduceMotionHelp')}
+                        checked={preferences.reduce_motion}
+                        onChange={(value) => change('reduce_motion', value)}
+                    />
+                </div>
+            </Card>
+            <Card title={t('requestPreferences')} icon="list">
+                <div className={body}>
+                    <Field label={t('rowsPerPage')}>
+                        <select value={preferences.page_size} onChange={(e) => change('page_size', Number(e.target.value))}>
+                            {[8, 16, 24].map((size) => (
+                                <option key={size} value={size}>
+                                    {size}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Field label={t('defaultView')}>
+                        <select value={preferences.default_view} onChange={(e) => change('default_view', e.target.value)}>
+                            {['list', 'board'].map((value) => (
+                                <option key={value} value={value}>
+                                    {t(value)}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <p className={hint}>{t('preferencesHelp')}</p>
+                    {saveButton}
+                </div>
+            </Card>
+            {user.tenancy_enabled && (
+                <Card title={t('visualDebug')} icon="monitor">
+                    <div className={body}>
+                        <Toggle
+                            label={t('traceEnabled')}
+                            help={t('enableDebugHelp')}
+                            checked={preferences.visual_debug}
+                            onChange={(value) => change('visual_debug', value)}
+                        />
+                        <button type="submit" form="profile-settings-form" className="btn primary" disabled={busy}>
+                            {t('save')}
+                        </button>
+                    </div>
+                </Card>
+            )}
+            <Card title={t('resetSettings')} icon="refresh">
+                <div className={body}>
+                    <p className={hint}>{t('resetSettingsHelp')}</p>
+                    <button type="button" className="btn secondary" disabled={busy} onClick={restoreDefaults}>
+                        {t('restoreDefaults')}
                     </button>
-                </section>
-            </div>
+                </div>
+            </Card>
+            <section className="panel mb-6 p-[25px]">
+                <Icon name="shield" size={26} className="mb-[13px] text-brand" />
+                <h3 className="text-[13px] font-semibold">
+                    {t('accountRole')}: {t(user.role)}
+                </h3>
+                <p className="mb-5 mt-1.5 text-[12px] text-muted">{t('roleHelp')}</p>
+                <button className="btn secondary text-[#b26169]" onClick={() => router.post('/logout')}>
+                    <Icon name="logout" size={17} />
+                    {t('logout')}
+                </button>
+            </section>
+            <DeleteAccount />
         </div>
     );
 }

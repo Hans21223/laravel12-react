@@ -98,7 +98,7 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
             </div>
             <button
                 type="button"
-                className={`mx-0.5 flex items-center gap-2.5 rounded-[5px] border border-[#ffffff12] bg-[#ffffff04] px-2.5 py-3 text-left ${inDialog ? 'max-md:mb-[22px] max-md:mt-[18px]' : `mb-7 w-full [@media_(max-height:800px)_and_(min-width:761px)]:mb-[22px]`}`}
+                className={`mx-0.5 flex items-center gap-2.5 rounded-[5px] border border-[#ffffff12] bg-[#ffffff04] px-2.5 py-3 text-left ${inDialog ? 'max-md:mb-[22px] max-md:mt-[18px]' : `mb-7 [@media_(max-height:800px)_and_(min-width:761px)]:mb-[22px]`}`}
                 onClick={() =>
                     navigate(user.tenancy_enabled ? 'organizations' : 'settings')
                 }
