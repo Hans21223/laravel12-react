@@ -30,7 +30,12 @@ with tempfile.TemporaryDirectory(prefix='anaheim-deploy-') as directory:
         info.size, info.mode = len(secret), 0o600
         archive.addfile(info, io.BytesIO(secret))
         # Optional SMTP credentials travel inside the SSH stream and are removed right after configuration.
-        mail = json.dumps({'username': os.environ.get('AE_MAIL_USERNAME', ''), 'password': os.environ.get('AE_MAIL_PASSWORD', '')}).encode()
+        username, password = os.environ.get('AE_MAIL_USERNAME', ''), os.environ.get('AE_MAIL_PASSWORD', '')
+        # A single GMAIL secret may hold "address password" (or "address:password") instead of only the app password.
+        combined = re.fullmatch(r'\s*([^\s:,;]+@[^\s:,;]+)[\s:,;]+(.+?)\s*', password, re.S)
+        if combined:
+            username, password = combined.groups()
+        mail = json.dumps({'username': username if password else '', 'password': password}).encode()
         info = tarfile.TarInfo('mail-credentials.json')
         info.size, info.mode = len(mail), 0o600
         archive.addfile(info, io.BytesIO(mail))

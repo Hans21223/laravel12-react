@@ -37,9 +37,10 @@ jobs:
             systemctl is-active ae-reverb || true
             echo '--- mail delivery for the account owner address ---'
             cd /var/www/Helldriver.csbootstrap.com/laravel12-react && php artisan tinker --execute="echo App\Models\User::where('email', 'hans24095@gmail.com')->exists() ? 'ACCOUNT_EXISTS' : 'NO_ACCOUNT';" || true
-            postconf -h myhostname inet_protocols smtp_tls_security_level 2>/dev/null || true
-            grep -h 'hans24095@gmail.com' /var/log/mail.log /var/log/mail.log.1 2>/dev/null | tail -12 || true
-            journalctl -u postfix --since '-2 days' --no-pager 2>/dev/null | grep 'hans24095@gmail.com' | tail -12 || true
+            # Connects, upgrades to TLS and logs in without sending anything; the password is never printed.
+            php artisan tinker --execute='try { app("mailer")->getSymfonyTransport()->start(); echo "SMTP_LOGIN_OK"; } catch (Throwable $e) { echo "SMTP_LOGIN_FAILED: ".$e->getMessage(); }' || true
+            echo '--- recent mail errors ---'
+            grep -E '^\[[^]]+\] production\.ERROR' storage/logs/laravel.log 2>/dev/null | grep -iE 'smtp|mail|authenticat|transport' | tail -5 | cut -c1-400 || true
             echo '--- turn relay (secrets removed) ---'
             grep -v -E 'secret' /etc/turnserver.conf || true
             ss -lunp | grep -E 'turnserver|:3478' | head -5 || true
