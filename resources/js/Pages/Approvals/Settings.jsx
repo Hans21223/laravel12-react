@@ -39,7 +39,7 @@ function Toggle({ label, help, checked, onChange }) {
             </span>
             <input
                 type="checkbox"
-                className="size-[19px] shrink-0 [accent-color:#c64250]"
+                className="settings-toggle"
                 checked={checked}
                 onChange={(e) => onChange(e.target.checked)}
             />

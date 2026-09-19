@@ -219,16 +219,16 @@ export function TypeIcon({ type, size = 18, box = 'md' }) {
     );
 }
 const statusTones = {
-    pending: 'border-[#eee2c8] bg-[#fbf6e9] text-[#9c7a2d]',
-    approved: 'border-[#e0ede2] bg-[#edf5f1] text-[#4f7f6b]',
-    rejected: 'border-[#f0dce0] bg-[#fbeced] text-[#b35d67]',
-    cancelled: 'border-[#ebe2ef] bg-[#f4eff7] text-[#8e7b94]',
+    pending: 'border-[#eee2c8] bg-[#fbf6e9] text-[#8b6a24] dark:border-[#55452b] dark:bg-[#332c22] dark:text-[#e5bf79]',
+    approved: 'border-[#e0ede2] bg-[#edf5f1] text-[#426f5c] dark:border-[#2e5147] dark:bg-[#1c332f] dark:text-[#93cbb0]',
+    rejected: 'border-[#f0dce0] bg-[#fbeced] text-[#a84b58] dark:border-[#5a3542] dark:bg-[#372530] dark:text-[#eaa0ae]',
+    cancelled: 'border-[#ebe2ef] bg-[#f4eff7] text-[#80698b] dark:border-[#493b57] dark:bg-[#2c2436] dark:text-[#bfa9d1]',
 };
 export function Badge({ status }) {
     const { t } = useLocale();
     return (
         <span
-            className={`inline-flex items-center gap-[5px] whitespace-nowrap rounded-[3px] border px-[7px] py-1 text-[9px] font-medium leading-[1.1] dark:brightness-[.86] ${statusTones[status] || 'border-[#e8e9eb] bg-[#f1f2f3] text-[#81878d]'}`}
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[11px] font-medium leading-[1.1] ${statusTones[status] || 'border-line bg-surface-alt text-muted'}`}
         >
             <span className="size-1 rounded-full bg-current" />
             {t(status)}
@@ -269,7 +269,7 @@ export function Avatar({ name = '', small = false, src, className }) {
         <span
             className={`inline-flex shrink-0 items-center justify-center overflow-hidden font-[650] ${
                 className ||
-                `${small ? 'size-[29px] rounded text-[9px]' : 'size-9 rounded-md text-[11px]'} ${avatarTone(name)}`
+                `${small ? 'size-8 rounded-full text-[10px]' : 'size-10 rounded-full text-[12px]'} ${avatarTone(name)}`
             }`}
         >
             {src && !failed ? (
@@ -326,15 +326,15 @@ export function Modal({
             onClose={onClose}
             className="accord-dialog relative z-[70]"
         >
-            <div className="fixed inset-0 bg-[#0f211d70] backdrop-blur-[4px] print:hidden" />
+            <div className="fixed inset-0 bg-[#08132480] backdrop-blur-[4px] print:hidden" />
             <div className="fixed inset-0 flex items-start justify-center overflow-y-auto px-5 py-10 max-md:px-2.5 max-md:py-[18px]">
                 <DialogPanel
-                    className={`relative my-auto w-full animate-enter rounded-[5px] bg-surface text-ink shadow-[0_24px_80px_#0a1f2440] ${width} ${className}`}
+                    className={`relative my-auto w-full animate-enter rounded-[20px] bg-surface text-ink shadow-[0_24px_90px_#08162e50] ${width} ${className}`}
                 >
                     <div
-                        className={`flex items-center justify-between gap-[18px] rounded-t-[5px] border-b border-t-[3px] border-b-line border-t-signal px-[25px] py-[18px] max-md:px-[18px] max-md:py-3.5 ${headingClassName}`}
+                        className={`flex items-center justify-between gap-[18px] rounded-t-[20px] border-b border-b-line px-7 py-5 max-md:px-5 max-md:py-4 ${headingClassName}`}
                     >
-                        <DialogTitle className="font-technical text-[16px] font-semibold tracking-[0.2px]">
+                        <DialogTitle className="font-sans text-[19px] font-semibold tracking-[-0.4px]">
                             {title}
                         </DialogTitle>
                         <button
@@ -377,7 +377,7 @@ const fieldControls =
 export function Field({ label, error, children, hint, className = 'mb-[18px]' }) {
     return (
         <label className={`flex flex-col gap-[7px] ${fieldControls} ${className}`}>
-            <span className="text-[11px] font-semibold text-ink">{label}</span>
+            <span className="text-[12px] font-semibold text-ink">{label}</span>
             {children}
             {error && (
                 <small className="text-[10px] font-normal text-[#b5655a]" role="alert">
@@ -392,15 +392,15 @@ export function Field({ label, error, children, hint, className = 'mb-[18px]' })
 }
 export function PageHeading({ eyebrow, title, sub, actions, compactTitle = false }) {
     return (
-        <div className="mb-[25px] flex items-center justify-between gap-5 max-md:mb-[22px] max-md:items-start max-md:gap-[15px] max-md:[&>.btn]:mt-5 max-md:[&>.btn]:px-2.5 max-md:[&>.btn]:py-[9px] max-md:[&>.btn]:text-[10px] print:[&>.btn]:!hidden">
+        <div className="page-heading max-md:[&>.btn]:mt-5 max-md:[&>.btn]:px-3 max-md:[&>.btn]:text-[11px] print:[&>.btn]:!hidden">
             <div>
                 <div className="eyebrow max-md:text-[8px]">{eyebrow}</div>
                 <h1
-                    className={`font-technical text-[29px] font-[650] leading-[1.3] tracking-[-0.65px] ${compactTitle ? 'max-md:text-[24px]' : 'max-md:text-[25px]'}`}
+                    className="page-title"
                 >
                     {title}
                 </h1>
-                <p className="mt-[7px] text-[12px] text-muted max-md:max-w-[360px]">
+                <p className="mt-2.5 text-[14px] leading-relaxed text-muted max-md:max-w-[360px] max-md:text-[13px]">
                     {sub}
                 </p>
             </div>
@@ -431,7 +431,7 @@ export function CountPill({ children }) {
 export function DialogFooter({ children, className = '' }) {
     return (
         <div
-            className={`flex items-center justify-between gap-3 rounded-b-[5px] border-t border-t-line bg-surface-alt px-[25px] py-[18px] max-md:px-[18px] max-md:py-[15px] max-md:[&_.btn]:px-[11px] max-md:[&_.btn]:py-2.5 max-md:[&_.btn]:text-[10px] ${className}`}
+            className={`sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-b-[20px] border-t border-t-line bg-surface-alt px-[25px] py-[18px] max-md:px-[18px] max-md:py-[15px] max-md:[&_.btn]:px-[11px] max-md:[&_.btn]:py-2.5 max-md:[&_.btn]:text-[11px] ${className}`}
         >
             {children}
         </div>

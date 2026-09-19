@@ -83,7 +83,7 @@ export function RouteBuilder({ form, change, busy, error }) {
                             type="button"
                             key={mode}
                             disabled={busy}
-                            className={`flex items-start gap-3 border p-4 text-left text-ink ${selected ? 'border-brand bg-brand-tint [box-shadow:inset_0_3px_var(--green)]' : 'border-line bg-surface'}`}
+                            className={`flex items-start gap-3 !rounded-xl border p-4 text-left text-ink ${selected ? 'border-brand bg-brand-tint' : 'border-line bg-surface hover:bg-surface-alt'}`}
                             aria-pressed={selected}
                             onClick={() => {
                                 change('route_mode', mode);

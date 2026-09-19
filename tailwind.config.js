@@ -29,7 +29,7 @@ export default {
             },
             fontFamily: {
                 sans: ['Segoe UI', 'Noto Sans Thai', 'Yu Gothic UI', 'Tahoma', 'sans-serif'],
-                technical: ['Bahnschrift', 'Arial Narrow', 'Segoe UI', 'sans-serif'],
+                technical: ['Segoe UI', 'Noto Sans Thai', 'Yu Gothic UI', 'Tahoma', 'sans-serif'],
                 mono: ['ui-monospace', 'Cascadia Code', 'Consolas', 'monospace'],
                 code: ['ui-monospace', 'Consolas', 'monospace'],
             },

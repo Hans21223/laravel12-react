@@ -71,14 +71,15 @@ const requestId = (id) => `REQ-${String(id).padStart(4, '0')}`;
 
 function SidebarNav({ user, view, summary, notifications, navigate, onClose, inDialog = false }) {
     const { t } = useLocale();
+    const secondary = ['insights', 'notifications', ...(user.tenancy_enabled ? ['organizations', ...(user.role === 'manager' ? ['database'] : []), 'debug'] : []), 'help'];
+    const [toolsOpen, setToolsOpen] = useState(() => secondary.includes(view));
+    useEffect(() => {
+        if (secondary.includes(view)) setToolsOpen(true);
+    }, [view]);
     const link = (key, badge) => (
         <button
             key={key}
-            className={`flex min-h-[41px] w-full items-center gap-3 !rounded-[3px] border-l-2 py-[11px] pl-[11px] pr-[13px] text-left text-[12px] [&_svg]:opacity-90 ${
-                view === key
-                    ? 'border-l-signal bg-[#293f5b] font-[650] text-white'
-                    : 'border-l-transparent text-[#a8bad1] hover:bg-[#ffffff0a] hover:text-white'
-            }`}
+            className="workspace-nav-link"
             onClick={() => navigate(key)}
             aria-current={view === key ? 'page' : undefined}
         >
@@ -98,15 +99,15 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
             </div>
             <button
                 type="button"
-                className={`mx-0.5 flex items-center gap-2.5 rounded-[5px] border border-[#ffffff12] bg-[#ffffff04] px-2.5 py-3 text-left ${inDialog ? 'max-md:mb-[22px] max-md:mt-[18px]' : `mb-7 [@media_(max-height:800px)_and_(min-width:761px)]:mb-[22px]`}`}
+                className={`mx-0.5 flex items-center gap-2.5 rounded-xl border border-[#ffffff12] bg-[#ffffff06] px-3 py-3.5 text-left hover:bg-white/5 ${inDialog ? 'max-md:mb-[22px] max-md:mt-[18px]' : 'mb-7'}`}
                 onClick={() =>
                     navigate(user.tenancy_enabled ? 'organizations' : 'settings')
                 }
             >
-                <span className="grid size-[33px] place-items-center rounded-[3px] bg-signal font-technical text-[14px] font-bold text-white">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-signal font-technical text-[13px] font-bold text-white shadow-sm">
                     AE
                 </span>
-                <div>
+                <div className="min-w-0 flex-1">
                     <strong className="block text-[12px] font-[550] text-[#e4ebf4]">
                         {user.organization?.name || 'AE Operations'}
                     </strong>
@@ -114,17 +115,15 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
                         {t('team')}
                     </small>
                 </div>
-                <span className="ml-auto mr-1 size-[5px] rounded-full bg-[#82aacb]" />
+                <Icon name="down" size={14} className="shrink-0 text-[#92a9c5]" />
             </button>
             <p className={label}>{t('mainMenu')}</p>
-            <nav className="flex shrink-0 flex-col gap-[5px]">
+            <nav aria-label={t('mainMenu')} className="flex shrink-0 flex-col gap-1">
                 {[
                     'overview',
-                    'requests',
                     'mine',
                     ...(user.role === 'manager' ? ['review'] : []),
-                    'insights',
-                    ...(user.tenancy_enabled ? ['employees', 'messages'] : []),
+                    'requests',
                 ].map((key) =>
                     link(
                         key,
@@ -138,20 +137,22 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
                     ),
                 )}
             </nav>
-            <p className={`${label} !mt-[33px]`}>{t('tools')}</p>
-            <nav className="flex shrink-0 flex-col gap-[5px]">
-                {[
-                    'notifications',
-                    ...(user.tenancy_enabled
-                        ? [
-                              'organizations',
-                              ...(user.role === 'manager' ? ['database'] : []),
-                              'debug',
-                          ]
-                        : []),
-                    'settings',
-                    'help',
-                ].map((key) =>
+            {user.tenancy_enabled && <>
+                <p className={`${label} !mt-7`}>{t('teamNavigation')}</p>
+                <nav aria-label={t('teamNavigation')} className="flex shrink-0 flex-col gap-1">
+                    {['employees', 'messages'].map(key => link(key))}
+                </nav>
+            </>}
+            <div className="mt-6 border-t border-white/10 pt-4">
+                {link('settings')}
+                <button className="workspace-nav-link" aria-expanded={toolsOpen} aria-controls={inDialog ? 'mobile-workspace-tools' : 'workspace-tools'} onClick={() => setToolsOpen(value => !value)}>
+                    <Icon name="grid" size={19} />
+                    <span>{t('workspaceTools')}</span>
+                    <Icon name="down" size={14} className={`ml-auto transition-transform ${toolsOpen ? 'rotate-180' : ''}`} />
+                </button>
+            </div>
+            <nav aria-label={t('workspaceTools')} id={inDialog ? 'mobile-workspace-tools' : 'workspace-tools'} className="mt-1 flex shrink-0 flex-col gap-1 border-l border-white/10 pl-2" hidden={!toolsOpen} style={!toolsOpen ? { display: 'none' } : undefined}>
+                {secondary.map((key) =>
                     link(
                         key,
                         key === 'notifications' && notifications.unread > 0 && (
@@ -163,24 +164,6 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
             <div
                 className={`mt-auto ${inDialog ? 'max-md:pt-[25px]' : `pt-[35px] [@media_(max-height:800px)_and_(min-width:761px)]:pt-5`}`}
             >
-                <div
-                    className={`mx-0.5 mb-[23px] rounded-[5px] border border-[#ffffff13] bg-[linear-gradient(120deg,#35507530,transparent)] px-[13px] py-4 [@media_(max-height:800px)_and_(min-width:761px)]:hidden ${inDialog ? 'max-md:hidden' : ''}`}
-                >
-                    <span className="flex items-center gap-2 text-[11px] font-semibold text-[#bfcfe5]">
-                        <Icon name="spark" size={17} />
-                        {t('workflow')}
-                    </span>
-                    <p className="!mt-2 text-[11px] leading-[1.7] text-[#8499b5]">
-                        {t('securityTitle')}
-                    </p>
-                    <button
-                        className="mt-3 flex items-center gap-2 text-[10px] text-[#c9d6e9]"
-                        onClick={() => navigate('help')}
-                    >
-                        {t('help')}
-                        <Icon name="arrow" size={15} />
-                    </button>
-                </div>
                 <button
                     className={`flex w-full items-center gap-2.5 border-t border-t-[#ffffff13] px-0.5 py-[18px] text-left [@media_(max-height:800px)_and_(min-width:761px)]:py-[15px]`}
                     onClick={() => navigate('settings')}
@@ -210,8 +193,8 @@ function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
     const menuItem =
         'flex w-full items-center gap-2.5 !rounded-[3px] px-3 py-[11px] text-left data-[focus]:bg-brand-tint';
     return (
-        <header className="flex h-[74px] items-center justify-between gap-5 border-b border-t-[3px] border-b-line border-t-surface bg-surface px-9 max-xl:px-[25px] max-md:h-[65px] max-md:gap-3 max-md:px-[18px] print:!hidden">
-            <div className="flex items-center gap-[13px] whitespace-nowrap text-[11px] text-muted max-md:gap-[9px]">
+        <header className="workspace-topbar">
+            <div className="flex items-center gap-3 whitespace-nowrap text-[13px] text-muted max-md:gap-[9px]">
                 <button
                     className="icon-button !hidden max-md:!inline-flex"
                     aria-label={t('openMenu')}
@@ -225,7 +208,7 @@ function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
             </div>
             <div className="flex items-center gap-[18px] max-xl:gap-[13px] max-lg:gap-2.5 max-md:gap-3">
                 <button
-                    className="flex items-center gap-[9px] text-[11px] text-muted max-md:hidden"
+                    className="workspace-search"
                     onClick={onSearch}
                 >
                     <Icon name="search" size={17} />
@@ -236,7 +219,7 @@ function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
                 </button>
                 <LanguagePicker />
                 <button
-                    className="icon-button relative w-6"
+                    className="icon-button relative"
                     aria-label={t('notifications')}
                     onClick={() => navigate('notifications')}
                 >
@@ -248,10 +231,11 @@ function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
                 <span className="h-[23px] w-px bg-line max-md:hidden" />
                 <Menu as="div" className="relative">
                     <MenuButton
-                        className="flex items-center gap-[7px] rounded-[5px] p-[5px] hover:bg-surface-alt data-[open]:bg-surface-alt"
+                        className="flex items-center gap-2.5 rounded-xl p-1.5 hover:bg-surface-alt data-[open]:bg-surface-alt"
                         aria-label={t('accountMenu')}
                     >
                         <Avatar name={user.name} src={user.avatar_url} small />
+                        <span className="max-w-[130px] truncate text-[12px] font-semibold max-xl:hidden">{user.name}</span>
                         <Icon name="down" size={12} />
                     </MenuButton>
                     <MenuItems className="absolute right-0 top-[calc(100%_+_12px)] z-[70] w-[270px] max-w-[calc(100vw_-_24px)] rounded-[5px] border border-t-[3px] border-line border-t-[#c64250] bg-surface p-[7px] [box-shadow:0_16px_48px_#09162730]">
@@ -397,7 +381,7 @@ function RequestsView({
     const { search, setSearch, status, setStatus, type, setType, priority, setPriority, sort, setSort, page, setPage } = filters;
     const filtered = !!(search || status || type || priority);
     const select =
-        'min-h-[31px] max-w-[170px] !rounded-[3px] bg-[length:13px] bg-[position:right_6px_center] py-1.5 pl-[9px] pr-[26px] !text-[10px] max-md:max-w-[130px] max-md:!text-[9px]';
+        'min-h-9 max-w-[185px] !rounded-lg bg-[length:13px] bg-[position:right_8px_center] py-2 pl-3 pr-7 !text-[12px] max-md:max-w-[145px] max-md:!text-[11px]';
     const toggle = (value, icon) => (
         <button
             className={`!rounded-sm p-1.5 ${display === value ? 'bg-surface-alt text-ink' : 'text-muted'}`}
@@ -440,7 +424,7 @@ function RequestsView({
                         ))}
                 </div>
                 <div className="flex items-center justify-between gap-4 px-5 pb-3 pt-[18px] max-xl:gap-2.5 max-md:flex-wrap max-md:p-[15px]">
-                    <label className="flex w-[380px] items-center gap-[9px] !rounded-[3px] border border-line px-2.5 text-muted max-md:w-full max-md:min-w-[150px] max-md:flex-1">
+                    <label className="flex w-[380px] items-center gap-[9px] !rounded-xl border border-line px-3 text-muted max-md:w-full max-md:min-w-[150px] max-md:flex-1">
                         <Icon name="search" size={18} />
                         <input
                             className="w-full !border-0 !bg-transparent px-0 py-[9px] !text-[11px]"
@@ -1090,8 +1074,9 @@ function WorkspaceContent({ initialUser, realtime }) {
             data-density={preferences.density}
         >
             <Head title={t(view)} />
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-surface focus:px-5 focus:py-3 focus:text-ink focus:shadow-lg">{t('skipToContent')}</a>
             <aside
-                className={`fixed inset-y-0 left-0 z-[25] flex w-[236px] flex-col overflow-y-auto border-r border-r-[#273750] bg-[#111f33] bg-[linear-gradient(165deg,#16263e,#0e1a2c)] px-[17px] pb-0 pt-[30px] text-[#b8c5d7] before:absolute before:left-0 before:top-0 before:h-[3px] before:w-full before:bg-[linear-gradient(to_right,var(--signal)_0_47px,#344a68_47px_100%)] before:content-[''] max-xl:w-[211px] max-xl:px-3 max-md:hidden print:!hidden [&>*]:shrink-0 [@media_(max-height:800px)_and_(min-width:761px)]:pt-[23px]`}
+                className="workspace-sidebar"
             >
                 <SidebarNav {...navProps} />
             </aside>
@@ -1106,15 +1091,16 @@ function WorkspaceContent({ initialUser, realtime }) {
                     <SidebarNav {...navProps} inDialog />
                 </Modal>
             )}
-            <div className="ml-[236px] w-[calc(100%_-_236px)] min-w-0 max-xl:ml-[211px] max-xl:w-[calc(100%_-_211px)] max-md:ml-0 max-md:w-full print:m-0 print:w-full">
+            <div className="ml-[248px] w-[calc(100%_-_248px)] min-w-0 max-xl:ml-[224px] max-xl:w-[calc(100%_-_224px)] max-md:ml-0 max-md:w-full print:m-0 print:w-full">
                 <Topbar
                     {...navProps}
                     onMenu={() => setMobile(true)}
                     onSearch={() => setSearchModal(true)}
                 />
                 <main
-                    className="m-auto max-w-[1560px] px-9 pb-0 pt-[31px] max-xl:px-[25px] max-md:px-[18px] max-md:pt-[25px] print:px-0"
+                    className="m-auto max-w-[1560px] px-9 pb-0 pt-9 max-xl:px-7 max-md:px-[18px] max-md:pt-[25px] print:px-0"
                     id="main-content"
+                    tabIndex={-1}
                 >
                     {error && (
                         <div
@@ -1145,7 +1131,7 @@ function WorkspaceContent({ initialUser, realtime }) {
                                     summary={summary}
                                     user={user}
                                     onNavigate={navigate}
-                                    onNew={() => setForm({})}
+                                    onNew={(type) => setForm({ type })}
                                     onOpen={open}
                                     onFilter={filterBy}
                                 />

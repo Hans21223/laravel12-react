@@ -267,7 +267,7 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                                     disabled={busy}
                                     aria-pressed={form.type === type}
                                     onClick={() => change('type', type)}
-                                    className={`relative !rounded border px-3 py-[15px] text-left max-md:px-[9px] max-md:py-3 ${form.type === type ? 'border-[#6288b7] bg-brand-tint' : 'border-line hover:border-[#9eb8a7]'}`}
+                                    className={`relative !rounded-xl border px-3 py-4 text-left max-md:px-[9px] max-md:py-3 ${form.type === type ? 'border-[#6288b7] bg-brand-tint' : 'border-line hover:border-[#9eb8a7]'}`}
                                 >
                                     <TypeIcon type={type} />
                                     <strong className="mt-[11px] block text-[11px] font-semibold max-md:text-[10px]">

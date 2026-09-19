@@ -2,6 +2,13 @@ import axios from 'axios';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const en = {
+    skipToContent: 'Skip to main content',
+    teamNavigation: 'YOUR TEAM',
+    workspaceTools: 'Workspace tools',
+    quickCreate: 'Start a request',
+    quickCreateSub: 'Choose what you need. We’ll take it from there.',
+    reviewActionTitle: 'Ready for your review',
+    reviewsClear: 'You’re all caught up',
     crudCleanupNeeded: 'The test draft could not be removed automatically. Open its request ID and delete it after checking the error.',
     organizations: 'Organizations',
     employees: 'Employees',
@@ -539,6 +546,13 @@ const en = {
     inviteEmailFailed: "The key was created but the email could not be sent. Share it manually.",
 };
 const th = {
+    skipToContent: 'ข้ามไปยังเนื้อหาหลัก',
+    teamNavigation: 'ทีมของคุณ',
+    workspaceTools: 'เครื่องมือในองค์กร',
+    quickCreate: 'สร้างคำร้อง',
+    quickCreateSub: 'เลือกประเภทคำร้องที่คุณต้องการ',
+    reviewActionTitle: 'คำร้องที่รอคุณตรวจสอบ',
+    reviewsClear: 'ตรวจสอบครบแล้ว',
     crudCleanupNeeded: 'ลบฉบับร่างทดสอบอัตโนมัติไม่สำเร็จ กรุณาเปิดรหัสคำร้องนี้และลบหลังตรวจสอบข้อผิดพลาด',
     organizations: 'องค์กร',
     employees: 'พนักงาน',
@@ -1057,6 +1071,13 @@ const th = {
     inviteEmailFailed: "สร้างคีย์แล้ว แต่ส่งอีเมลไม่สำเร็จ กรุณาแชร์คีย์ด้วยตนเอง",
 };
 const ja = {
+    skipToContent: 'メインコンテンツに移動',
+    teamNavigation: 'あなたのチーム',
+    workspaceTools: 'ワークスペースツール',
+    quickCreate: '申請を作成',
+    quickCreateSub: '必要な申請の種類を選択してください。',
+    reviewActionTitle: 'あなたの確認を待っています',
+    reviewsClear: 'すべて確認済みです',
     crudCleanupNeeded: 'テスト用下書きを自動削除できませんでした。エラーを確認し、この申請IDを開いて削除してください。',
     organizations: '組織',
     employees: '従業員',

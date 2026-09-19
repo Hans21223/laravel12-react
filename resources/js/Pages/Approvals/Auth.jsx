@@ -17,7 +17,7 @@ const statusMessages = {
     login: 'passwordResetDone',
     verify: 'verificationSent',
 };
-const authInput = '!py-[11px] !text-[12px] max-md:!text-[14px]';
+const authInput = '!py-3 !text-[14px]';
 
 function AuthContent({ mode = 'login', status, email = '', token = '' }) {
     const { t } = useLocale();
@@ -104,14 +104,14 @@ function AuthContent({ mode = 'login', status, email = '', token = '' }) {
                     </div>
                     <LanguagePicker />
                 </div>
-                <div className="m-auto w-full max-w-[352px] py-[50px] max-md:max-w-[365px]">
-                    <span className="relative mb-[25px] grid size-[51px] place-items-center rounded-[5px] border border-[#dce5f0] bg-[#edf2f9] text-[#6285b0] after:absolute after:-bottom-px after:-left-px after:h-0.5 after:w-3 after:bg-signal after:content-['']">
+                <div className="m-auto w-full max-w-[400px] py-[50px] max-md:max-w-[400px]">
+                    <span className="mb-7 grid size-14 place-items-center rounded-2xl border border-line bg-brand-tint text-brand shadow-sm">
                         <Icon name={config.icon} size={26} />
                     </span>
                     <h2 className="font-technical text-[34px] font-semibold leading-[1.3] tracking-[-1px] max-md:text-[31px]">
                         {t(config.title)}
                     </h2>
-                    <p className="mt-[9px] text-[12px] text-[#8090a4]">
+                    <p className="mt-3 text-[14px] leading-relaxed text-muted">
                         {t(config.sub)}
                     </p>
                     <form onSubmit={submit} className="mt-[30px]">
@@ -290,7 +290,7 @@ function AuthContent({ mode = 'login', status, email = '', token = '' }) {
 function FloatingCard({ className, children }) {
     return (
         <div
-            className={`absolute flex items-center gap-[11px] rounded px-4 py-3.5 shadow-[0_15px_40px_#0f291d30] [&_small]:mt-1 [&_small]:block [&_small]:text-[9px] [&_strong]:block [&_strong]:text-[12px] [&_strong]:font-semibold ${className}`}
+            className={`absolute flex items-center gap-3 rounded-2xl px-5 py-4 shadow-[0_15px_40px_#08162e30] [&_small]:mt-1 [&_small]:block [&_small]:text-[10px] [&_strong]:block [&_strong]:text-[13px] [&_strong]:font-semibold ${className}`}
         >
             {children}
         </div>

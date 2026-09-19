@@ -20,17 +20,17 @@ const statTones = {
         bar: 'after:bg-[#5b789c]',
     },
     pending: {
-        icon: 'bg-[#fcf5e7] text-[#bb954d]',
+        icon: 'bg-[#fcf5e7] text-[#a67c30] dark:bg-[#3a3022] dark:text-[#e8bb6e]',
         spark: 'text-[#baa46f]',
         bar: 'after:bg-[#c2a15c]',
     },
     approved: {
-        icon: 'bg-[#eaf0f7] text-[#558a62]',
+        icon: 'bg-[#eaf4ef] text-[#4c8067] dark:bg-[#1c3635] dark:text-[#85c5a7]',
         spark: 'text-[#5379a5]',
         bar: 'after:bg-[#648e80]',
     },
     rejected: {
-        icon: 'bg-[#faf0ed] text-[#b77d6d]',
+        icon: 'bg-[#faf0ed] text-[#b77d6d] dark:bg-[#392b36] dark:text-[#e5a1ac]',
         spark: 'text-[#bb777e]',
         bar: 'after:bg-signal',
     },
@@ -46,7 +46,7 @@ export function Stats({ summary, onFilter }) {
             .join(' ');
     };
     return (
-        <div className="mb-[23px] grid grid-cols-4 gap-[15px] max-xl:gap-[11px] max-lg:grid-cols-2 max-md:mb-[18px] max-md:gap-3 2xl:gap-[22px]">
+        <div className="metric-grid">
             {[
                 ['total', 'layers', 'totalHint'],
                 ['pending', 'clock', 'pendingHint'],
@@ -55,20 +55,20 @@ export function Stats({ summary, onFilter }) {
             ].map(([key, icon, hint]) => (
                 <button
                     key={key}
-                    className={`relative overflow-hidden rounded-[5px] border border-line bg-surface px-[18px] pb-4 pt-[17px] text-left shadow-card after:absolute after:bottom-0 after:left-[18px] after:h-0.5 after:w-7 after:content-[''] hover:-translate-y-0.5 hover:border-[#9db2ca] hover:[box-shadow:0_3px_16px_#23426c09] dark:hover:border-[#48668b] max-xl:px-3.5 max-xl:pb-3.5 max-lg:px-[17px] max-lg:pb-[17px] max-md:px-4 max-md:pb-4 2xl:px-[22px] 2xl:pb-[22px] print:break-inside-avoid ${statTones[key].bar}`}
+                    className="metric-card"
                     onClick={() => onFilter(key === 'total' ? '' : key)}
                 >
-                    <div className="flex items-center justify-between text-[11px] text-muted">
-                        <span className="font-technical text-[11px] font-[550] tracking-[0.4px]">
+                    <div className="flex items-center justify-between text-[13px] text-muted">
+                        <span className="font-sans text-[13px] font-medium">
                             {t(key)}
                         </span>
                         <span
-                            className={`grid size-[27px] place-items-center rounded ${statTones[key].icon}`}
+                            className={`grid size-10 place-items-center rounded-xl ${statTones[key].icon}`}
                         >
                             <Icon name={icon} size={17} />
                         </span>
                     </div>
-                    <div className="mx-0 mb-1.5 mt-[7px] flex items-center justify-between font-technical text-[31px] font-medium leading-[1.4] tracking-[-0.6px] max-xl:text-[28px]">
+                    <div className="metric-value">
                         {number(key === 'total' ? summary.total : summary.counts?.[key])}
                         <svg
                             viewBox="0 0 84 32"
@@ -78,7 +78,7 @@ export function Stats({ summary, onFilter }) {
                             <path d={spark(key)} fill="none" stroke="currentColor" strokeWidth="2" />
                         </svg>
                     </div>
-                    <small className="text-[10px] text-muted">{t(hint)}</small>
+                    <small className="text-[11px] text-muted">{t(hint)}</small>
                 </button>
             ))}
         </div>
@@ -96,7 +96,7 @@ export function Charts({ summary }) {
     const gridline = 'absolute inset-x-0 border-b border-dashed border-b-line';
     const bar = 'w-4 max-w-[42%] rounded-t-[3px] [transition:height_0.5s_ease]';
     return (
-        <div className="mb-[23px] grid grid-cols-[1.65fr_1fr] gap-5 max-xl:grid-cols-[1.5fr_1fr] max-xl:gap-[15px] max-lg:grid-cols-1 max-md:mb-[18px]">
+        <div className="mb-6 grid grid-cols-[1.65fr_1fr] gap-5 max-xl:grid-cols-[1.5fr_1fr] max-xl:gap-[15px] max-lg:grid-cols-1 max-md:mb-[18px]">
             <section className="panel">
                 <div className="panel-heading">
                     <div>
@@ -210,14 +210,14 @@ export function Charts({ summary }) {
 
 export function RequestTable({ rows, onOpen, compact = false }) {
     const { t, date } = useLocale();
-    const th = 'px-4 py-2.5 text-[10px] font-[550] tracking-[0.3px] text-muted first:pl-[21px] max-xl:px-3 compact:py-[9px]';
-    const td = 'border-b border-b-line px-4 py-[15px] text-[11px] text-muted first:pl-[21px] max-xl:px-3 compact:py-[9px] 2xl:py-[18px] [tr:last-child_&]:border-b-0';
+    const th = 'px-4 py-3.5 text-[11px] font-medium text-muted first:pl-6 max-xl:px-3 compact:py-[9px]';
+    const td = 'border-b border-b-line px-4 py-[18px] text-[12px] text-muted first:pl-6 max-xl:px-3 compact:py-[9px] [tr:last-child_&]:border-b-0 max-md:!border-0 max-md:!p-0';
     return (
         <div className="relative overflow-x-auto">
             <table
-                className={`w-full border-collapse whitespace-nowrap text-left ${compact ? 'max-md:min-w-[650px]' : 'max-md:min-w-[720px]'}`}
+                className="request-table whitespace-nowrap max-md:block"
             >
-                <thead className="border-y border-y-line bg-surface-alt">
+                <thead className="border-y border-y-line bg-surface-alt max-md:sr-only">
                     <tr>
                         <th className={th}>{t('request')}</th>
                         <th className={th}>{t('requester')}</th>
@@ -229,19 +229,19 @@ export function RequestTable({ rows, onOpen, compact = false }) {
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="max-md:block">
                     {rows.map((item) => (
                         <tr
                             key={item.id}
-                            className="cursor-pointer [transition:background_0.12s] hover:bg-surface-alt"
+                            className="cursor-pointer [transition:background_0.12s] hover:bg-surface-alt max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-3 max-md:border-t max-md:border-line max-md:p-5"
                             onClick={() => onOpen(item.id)}
                         >
-                            <td className={td}>
-                                <div className="flex max-w-[380px] items-center gap-[11px] max-xl:max-w-[280px]">
+                            <td className={`${td} max-md:col-span-2`}>
+                                <div className="flex max-w-[380px] items-center gap-[11px] max-xl:max-w-[280px] max-md:max-w-none">
                                     <TypeIcon type={item.type} />
                                     <div className="min-w-0">
                                         <button
-                                            className="block max-w-full truncate text-left text-[11px] font-semibold tracking-[-0.1px] text-ink hover:text-brand hover:underline"
+                                            className="block max-w-full truncate text-left text-[13px] font-semibold tracking-[-0.1px] text-ink hover:text-brand hover:underline max-md:whitespace-normal max-md:text-[14px]"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onOpen(item.id);
@@ -259,7 +259,7 @@ export function RequestTable({ rows, onOpen, compact = false }) {
                                 </div>
                             </td>
                             <td className={td}>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 max-md:[&_small]:hidden">
                                     <Avatar src={item.owner?.avatar_url} name={item.owner?.name} small />
                                     <div>
                                         <strong className="block text-[10px] font-medium text-ink">
@@ -271,16 +271,16 @@ export function RequestTable({ rows, onOpen, compact = false }) {
                                     </div>
                                 </div>
                             </td>
-                            <td className={td}>
+                            <td className={`${td} max-md:justify-self-end`}>
                                 <Badge status={item.status} />
                             </td>
                             <td className={td}>
                                 <Priority value={item.priority} className="max-xl:text-[9px]" />
                             </td>
                             {!compact && (
-                                <td className={`${td} font-code !text-[10px]`}>{date(item.due_date)}</td>
+                                <td className={`${td} font-code !text-[10px] max-md:justify-self-end`}><span className="hidden max-md:inline">{t('due')}: </span>{date(item.due_date)}</td>
                             )}
-                            <td className={td}>
+                            <td className={`${td} max-md:hidden`}>
                                 <Icon name="right" size={16} />
                             </td>
                         </tr>
@@ -317,33 +317,61 @@ export default function Dashboard({ summary, user, onNavigate, onNew, onOpen, on
                     </div>
                 }
             />
-            <Stats summary={summary} onFilter={onFilter} />
-            <section className="relative mb-[23px] flex min-h-[214px] items-center overflow-hidden rounded-[5px] border border-[#2b4a6c] bg-[linear-gradient(110deg,#1a304f,#203f63_65%,#294a6d)] px-[30px] py-7 text-[#f4f7fc] before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(#ffffff03_1px,transparent_1px),linear-gradient(90deg,#ffffff03_1px,transparent_1px)] before:bg-[length:26px_26px] before:content-[''] after:absolute after:left-[30px] after:top-0 after:h-[3px] after:w-11 after:bg-signal after:content-[''] dark:border-[#355378] dark:bg-[linear-gradient(110deg,#193252,#204164)] max-md:mb-[18px] max-md:min-h-[218px] max-md:p-6 max-md:after:left-6">
-                <div className="z-[1] max-w-[68%] max-xl:max-w-[71%] max-lg:max-w-[82%] max-md:max-w-[90%]">
-                    <span className="inline-flex items-center gap-[7px] font-mono text-[9px] font-semibold tracking-[1px] text-[#9cb7d5]">
-                        <span className="size-[5px] bg-[#d36770]" />
-                        {t(manager ? 'review' : 'workspace')}
-                    </span>
-                    <h2 className="mx-0 mb-[7px] mt-2 font-technical text-[27px] font-[550] tracking-[-0.5px] max-xl:text-[25px]">
-                        {t(manager ? 'attention' : 'employeeHero')}
-                    </h2>
-                    <p className="max-w-[490px] text-[12px] leading-[1.7] text-[#a8bbd2] max-md:text-[11px]">
-                        {manager && (
-                            <strong className="font-[650] text-[#eaf1fc]">{number(summary.review_count)} </strong>
-                        )}
-                        {t(manager ? 'attentionSub' : 'employeeHeroSub')}
+            <div className="mb-6 grid grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] gap-5 max-lg:grid-cols-1">
+                <section className="dashboard-hero !mb-0">
+                    <div className="z-[1] max-w-[68%] max-xl:max-w-[71%] max-lg:max-w-[82%] max-md:max-w-[90%]">
+                        <span className="inline-flex items-center gap-[7px] font-mono text-[9px] font-semibold tracking-[1px] text-[#9cb7d5]">
+                            <span className="size-[5px] bg-[#d36770]" />
+                            {t(manager ? 'review' : 'workspace')}
+                        </span>
+                        <h2 className="mb-3 mt-3 font-sans text-[32px] font-semibold leading-tight tracking-[-0.8px] max-md:text-[27px]">
+                            {t(
+                                manager
+                                    ? summary.review_count
+                                        ? 'reviewActionTitle'
+                                        : 'reviewsClear'
+                                    : 'employeeHero',
+                            )}
+                        </h2>
+                        <p className="max-w-[490px] text-[14px] leading-[1.7] text-[#b4c7df] max-md:text-[13px]">
+                            {manager && (
+                                <strong className="font-[650] text-[#eaf1fc]">
+                                    {number(summary.review_count)}{' '}
+                                </strong>
+                            )}
+                            {t(manager ? 'attentionSub' : 'employeeHeroSub')}
+                        </p>
+                        <button
+                            className="btn mt-5 border-white/15 bg-white/10 px-4 text-[12px] text-white shadow-none hover:bg-white/20"
+                            onClick={() => (manager ? onNavigate('review') : onNew())}
+                        >
+                            {t(manager ? 'reviewNow' : 'createFirst')}
+                            <Icon name="arrow" size={17} />
+                        </button>
+                    </div>
+                    <TechnicalArt />
+                </section>
+                <section className="panel p-5">
+                    <h2 className="text-[16px] font-semibold tracking-[-0.3px]">{t('quickCreate')}</h2>
+                    <p className="mb-3 mt-1.5 text-[12px] leading-relaxed text-muted">
+                        {t('quickCreateSub')}
                     </p>
-                    <button
-                        className="btn mt-[17px] min-h-[35px] !rounded-[3px] border-[#c6d6e9] bg-[#e7eef8] px-3 py-2 text-[11px] text-[#233e61] shadow-none hover:bg-white hover:text-[#213a5d] hover:[box-shadow:0_4px_10px_#3e5b3310]"
-                        onClick={() => (manager ? onNavigate('review') : onNew())}
-                    >
-                        {t(manager ? 'reviewNow' : 'createFirst')}
-                        <Icon name="arrow" size={17} />
-                    </button>
-                </div>
-                <TechnicalArt />
-            </section>
-            <Charts summary={summary} />
+                    <div className="grid gap-1">
+                        {['leave', 'budget', 'document'].map((type) => (
+                            <button
+                                key={type}
+                                className="flex min-h-14 items-center gap-3 !rounded-xl px-2.5 py-2 text-left hover:bg-surface-alt"
+                                onClick={() => onNew(type)}
+                            >
+                                <TypeIcon type={type} />
+                                <span className="flex-1 text-[13px] font-semibold">{t(type)}</span>
+                                <Icon name="right" size={16} className="text-muted" />
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            </div>
+            <Stats summary={summary} onFilter={onFilter} />
             <section className="panel">
                 <div className="panel-heading">
                     <div className="flex items-center gap-2">
@@ -361,6 +389,9 @@ export default function Dashboard({ summary, user, onNavigate, onNew, onOpen, on
                     <Empty onCreate={onNew} />
                 )}
             </section>
+            <div className="mt-6">
+                <Charts summary={summary} />
+            </div>
         </>
     );
 }

@@ -2,27 +2,27 @@
 
 /* Theme tokens. Tailwind colors (bg-surface, text-ink, border-line …) resolve to these variables. */
 :root {
-    --bg: #f3f5f8;
+    --bg: #f5f7fb;
     --surface: #fff;
-    --surface-alt: #f6f7f8;
-    --ink: #182b43;
-    --muted: #708095;
-    --line: #dfe5ed;
-    --green: #244e80;
+    --surface-alt: #f0f4fa;
+    --ink: #17263d;
+    --muted: #64748b;
+    --line: #e3e9f2;
+    --green: #345eaa;
     --green-dark: #193858;
-    --green-tint: #eaf0f7;
-    --shadow: 0 4px 20px #213e2e04;
-    --signal: #c6424c;
-    --signal-hover: #ad3440;
-    --technical-font: 'Bahnschrift', 'Arial Narrow', 'Segoe UI', sans-serif;
+    --green-tint: #edf3ff;
+    --shadow: 0 2px 4px #142c4b02, 0 8px 28px #142c4b05;
+    --signal: #d44555;
+    --signal-hover: #b73143;
+    --technical-font: 'Segoe UI', 'Noto Sans Thai', 'Yu Gothic UI', sans-serif;
 }
 html[data-accord-theme='dark'] {
-    --bg: #0c1522;
-    --surface: #142236;
-    --surface-alt: #1c2d44;
-    --ink: #e1e9f5;
-    --muted: #9caec8;
-    --line: #2a3d58;
+    --bg: #0c1422;
+    --surface: #131f31;
+    --surface-alt: #1b2a40;
+    --ink: #e6edf8;
+    --muted: #a0b0c7;
+    --line: #25354b;
     --green: #93b9ea;
     --green-dark: #afccf1;
     --green-tint: #203b60;
@@ -31,17 +31,17 @@ html[data-accord-theme='dark'] {
 
 html:has(.accord),
 body:has(.accord) {
-    @apply bg-[#f3f5f8] text-[#182b43];
+    @apply bg-canvas text-ink;
     color-scheme: light;
 }
 html[data-accord-theme='dark'],
 html[data-accord-theme='dark'] body {
-    @apply bg-[#0c1522];
+    @apply bg-canvas;
     color-scheme: dark;
 }
 .accord,
 .accord-dialog {
-    @apply font-sans text-[13px] leading-normal text-ink;
+    @apply font-sans text-[14px] leading-normal text-ink antialiased;
     color-scheme: light;
 }
 html[data-accord-theme='dark'] .accord,
@@ -52,7 +52,7 @@ html[data-accord-theme='dark'] .accord-dialog {
 .accord-dialog * {
     @apply box-border;
     scrollbar-width: thin;
-    scrollbar-color: #b8c5bc transparent;
+    scrollbar-color: #91a1b54d transparent;
 }
 /* Element defaults stay at element specificity so Tailwind utilities always win. */
 :where(.accord, .accord-dialog) :is(button, a) {
@@ -70,7 +70,7 @@ html[data-accord-theme='dark'] .accord-dialog {
 /* Form controls must outrank the @tailwindcss/forms base styles, so utilities on them may need the ! modifier. */
 .accord :is(input, select, textarea),
 .accord-dialog :is(input, select, textarea) {
-    @apply rounded border border-line bg-surface text-[13px] text-ink [box-shadow:none] placeholder:text-muted placeholder:opacity-[0.85];
+    @apply rounded-xl border border-line bg-surface text-[14px] text-ink [box-shadow:0_1px_2px_#142c4b03] placeholder:text-muted placeholder:opacity-75;
 }
 :where(.accord, .accord-dialog) :is(h1, h2, h3, p) {
     @apply m-0;
@@ -106,13 +106,13 @@ html[data-reduce-motion='true'] *::after {
 
 /* Shared primitives. Variants use :where() so page utilities can still override them. */
 .btn {
-    @apply inline-flex min-h-[39px] items-center justify-center gap-2 whitespace-nowrap rounded border border-transparent px-[15px] py-2.5 text-[12px] font-semibold leading-[1.45] tracking-[0.15px];
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent px-[18px] py-2.5 text-[13px] font-semibold leading-[1.45];
 }
 .btn:where(.primary) {
-    @apply bg-signal text-white shadow-[0_2px_0_#8e20301a] hover:-translate-y-px hover:bg-signal-hover hover:shadow-[0_3px_12px_#c6424c25];
+    @apply bg-signal text-white shadow-[0_4px_10px_#c6424c20] hover:-translate-y-px hover:bg-signal-hover hover:shadow-[0_6px_18px_#c6424c30] active:translate-y-0;
 }
 .btn:where(.secondary) {
-    @apply border-line bg-surface text-ink hover:border-[#b8c8bc] hover:bg-surface-alt;
+    @apply border-line bg-surface text-ink hover:border-[#b5c6df] hover:bg-surface-alt;
 }
 .btn:where(.ghost) {
     @apply text-muted hover:bg-surface-alt hover:text-ink;
@@ -121,30 +121,99 @@ html[data-reduce-motion='true'] *::after {
     @apply bg-[#b44747] text-white hover:bg-[#953737];
 }
 .icon-button {
-    @apply inline-flex size-[34px] shrink-0 items-center justify-center rounded text-muted hover:bg-surface-alt hover:text-ink;
+    @apply inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-surface-alt hover:text-ink;
 }
 .icon-button:where(.destructive) {
     @apply hover:bg-[#faecec] hover:text-[#bb4e4e];
 }
 .panel {
-    @apply overflow-hidden rounded-[5px] border border-line bg-surface shadow-card;
+    @apply overflow-hidden rounded-2xl border border-line bg-surface shadow-card;
 }
 .panel-heading {
-    @apply flex min-h-16 items-center justify-between gap-4 px-[21px] py-[18px] max-md:p-[18px];
+    @apply flex min-h-[76px] items-center justify-between gap-4 px-6 py-5 max-md:p-5;
 }
 :where(.panel-heading) h3 {
-    @apply font-technical text-[14px] font-semibold tracking-[0.05px];
+    @apply font-sans text-[15px] font-semibold tracking-[-0.2px];
 }
 :where(.panel-heading) p {
-    @apply mt-1 text-[10px] text-muted;
+    @apply mt-1.5 text-[12px] text-muted;
 }
-:where(.panel-heading) > svg {
-    @apply text-muted;
+.panel-heading > svg {
+    @apply box-content rounded-xl bg-surface-alt p-2.5 text-brand;
 }
 .text-link {
     @apply inline-flex items-center gap-[7px] text-[12px] font-semibold text-brand hover:text-brand-dark hover:underline;
 }
 .eyebrow {
-    @apply mb-2 font-mono text-[9px] font-[650] tracking-[1.55px] text-[#7c8da4];
+    @apply mb-2.5 font-mono text-[10px] font-semibold uppercase tracking-[1.6px] text-muted;
+}
+
+.workspace-sidebar {
+    @apply fixed inset-y-0 left-0 z-[25] flex w-[248px] flex-col overflow-y-auto overflow-x-hidden border-r border-white/5 bg-[#101c30] bg-[radial-gradient(ellipse_at_top_left,#243c5c66,transparent_65%)] px-4 pb-0 pt-8 text-[#b8c5d7] max-xl:w-[224px] max-xl:px-3 max-md:hidden print:!hidden [&>*]:shrink-0;
+}
+.workspace-nav-link {
+    @apply flex min-h-[42px] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left text-[13px] font-medium text-[#a6b7cf] hover:bg-white/5 hover:text-white;
+}
+.workspace-nav-link[aria-current='page'] {
+    @apply border-[#ffffff0d] bg-[#2c4363] text-white shadow-[0_3px_10px_#0000000d];
+}
+.workspace-nav-link[aria-current='page'] > svg {
+    @apply text-[#ff98a4];
+}
+.workspace-topbar {
+    @apply sticky top-0 z-20 flex h-[80px] items-center justify-between gap-5 border-b border-line bg-surface px-9 backdrop-blur-xl max-xl:px-7 max-md:h-[68px] max-md:gap-3 max-md:px-[18px] print:hidden;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+.workspace-search {
+    @apply flex min-h-10 items-center gap-2.5 rounded-xl border border-line bg-surface-alt px-3 text-[12px] text-muted hover:border-[#b5c6df] max-md:hidden;
+}
+.page-heading {
+    @apply mb-8 flex items-center justify-between gap-5 max-md:mb-6 max-md:items-start max-md:gap-3;
+}
+.page-title {
+    @apply font-sans text-[34px] font-semibold leading-[1.25] tracking-[-1.2px] max-md:text-[27px] max-md:tracking-[-0.7px];
+}
+.metric-grid {
+    @apply mb-6 grid grid-cols-4 gap-5 max-xl:gap-3 max-lg:grid-cols-2;
+}
+.metric-card {
+    @apply relative overflow-hidden rounded-2xl border border-line bg-surface p-5 text-left shadow-card transition hover:-translate-y-0.5 hover:border-[#b6c8e1] hover:shadow-lg max-md:p-4;
+}
+.metric-value {
+    @apply mb-2 mt-4 flex items-center justify-between gap-3 font-sans text-[40px] font-semibold leading-none tracking-[-1.6px] max-md:text-[32px];
+}
+.dashboard-hero {
+    @apply relative mb-6 flex min-h-[228px] items-center overflow-hidden rounded-[20px] border border-[#304969] bg-[#142942] px-8 py-8 text-[#f4f7fc] shadow-[0_12px_32px_#162d4810] max-md:min-h-[238px] max-md:p-6;
+    background-image:
+        radial-gradient(ellipse at 85% 10%, #456c974d, transparent 65%),
+        linear-gradient(110deg, #13233b, #1e3958);
+}
+.dashboard-hero::before {
+    @apply pointer-events-none absolute inset-0 bg-[linear-gradient(#ffffff03_1px,transparent_1px),linear-gradient(90deg,#ffffff03_1px,transparent_1px)] bg-[length:32px_32px] content-[''];
+}
+.dashboard-hero::after {
+    @apply absolute left-8 top-0 h-[3px] w-16 rounded-b-full bg-[#e7717e] content-[''];
+}
+.dashboard-hero > [aria-hidden='true'] {
+    opacity: 0.35;
+    mask-image: linear-gradient(to right, transparent, black 45%);
+}
+.request-table {
+    @apply w-full border-collapse text-left;
+}
+.request-table thead {
+    @apply bg-surface-alt;
+}
+.request-table tbody tr {
+    @apply transition-colors hover:bg-surface-alt;
+}
+.accord input.settings-toggle {
+    @apply relative h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full border-0 bg-line bg-none p-0 transition-colors checked:bg-signal checked:bg-none focus:ring-2 focus:ring-signal focus:ring-offset-2;
+}
+.accord input.settings-toggle::after {
+    @apply absolute left-[3px] top-[3px] size-[18px] rounded-full bg-white shadow-sm transition-transform content-[''];
+}
+.accord input.settings-toggle:checked::after {
+    @apply translate-x-5;
 }
 @tailwind utilities;
