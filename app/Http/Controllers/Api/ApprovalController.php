@@ -364,8 +364,14 @@ class ApprovalController extends Controller
     public function export(Request $request)
     {
         $q = $this->query($request);
+        // The download is streamed after the middleware has already released the organization
+        // database, so the connection is opened again inside the callback.
+        $organization = app(TenantContext::class)->organization;
 
-        return response()->streamDownload(function () use ($q) {
+        return response()->streamDownload(function () use ($q, $organization) {
+            if ($organization) {
+                app(TenantContext::class)->activate($organization);
+            }
             $file = fopen('php://output', 'w');
             fwrite($file, "\xEF\xBB\xBF");
             fputcsv($file, ['ID', 'Title', 'Employee', 'Department', 'Type', 'Status', 'Priority', 'Amount (THB)', 'Due date', 'Created at'], ',', '"', '');
@@ -375,6 +381,9 @@ class ApprovalController extends Controller
                 fputcsv($file, $row, ',', '"', '');
             }
             fclose($file);
+            if ($organization) {
+                app(TenantContext::class)->clear();
+            }
         }, 'approvals-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

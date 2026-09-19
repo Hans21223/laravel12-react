@@ -9,7 +9,7 @@
 
         {{-- ใช้ฟอนต์ของเครื่องผู้ใช้ ไม่ต้องพึ่ง CDN ภายนอก ระบบจึงทำงานได้แม้ไม่มีอินเทอร์เน็ต --}}
 
-        @routes
+        @routes(nonce: Illuminate\Support\Facades\Vite::cspNonce())
         @viteReactRefresh
         @vite('resources/js/app.jsx')
         @inertiaHead

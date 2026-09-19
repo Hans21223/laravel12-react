@@ -46,6 +46,8 @@ class OrganizationIsolationTest extends TestCase
     protected function tearDown(): void
     {
         app(TenantContext::class)->clear();
+        // Windows keeps the SQLite file open until the last statement is collected.
+        gc_collect_cycles();
         foreach ($this->tenantFiles as $path) {
             if (is_file($path)) {
                 unlink($path);
@@ -307,6 +309,18 @@ class OrganizationIsolationTest extends TestCase
         $this->flushSession();
         $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => $channel])->assertForbidden();
         $this->actingAs($outsider->fresh())->postJson('/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => 'private-workspace.'.$org->id.'.'.$outsider->id])->assertForbidden();
+    }
+
+    public function test_csv_export_streams_from_the_organization_database(): void
+    {
+        $owner = User::factory()->create();
+        $org = $this->organization($owner, 'Export Company');
+        $this->actor($owner, $org)->postJson('/api/approvals', $this->requestData())->assertCreated();
+
+        // Streamed downloads run after the tenant connection is released, so this guards that path.
+        $response = $this->actor($owner, $org)->get('/api/approvals/export');
+        $response->assertOk();
+        $this->assertStringContainsString('Organization private request', $response->streamedContent());
     }
 
     public function test_email_locked_invitations_can_be_emailed(): void
