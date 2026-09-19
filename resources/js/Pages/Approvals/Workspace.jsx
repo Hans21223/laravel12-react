@@ -1131,7 +1131,7 @@ function WorkspaceContent({ initialUser, realtime }) {
                                     summary={summary}
                                     user={user}
                                     onNavigate={navigate}
-                                    onNew={(type) => setForm({ type })}
+                                    onNew={(type) => setForm(['leave', 'budget', 'document'].includes(type) ? { type } : {})}
                                     onOpen={open}
                                     onFilter={filterBy}
                                 />
