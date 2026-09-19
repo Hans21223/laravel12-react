@@ -315,6 +315,7 @@ export function Modal({
     onClose,
     title,
     children,
+    footer,
     className = '',
     width = 'max-w-[690px]',
     headingClassName = '',
@@ -327,12 +328,13 @@ export function Modal({
             className="accord-dialog relative z-[70]"
         >
             <div className="fixed inset-0 bg-[#08132480] backdrop-blur-[4px] print:hidden" />
-            <div className="fixed inset-0 flex items-start justify-center overflow-y-auto px-5 py-10 max-md:px-2.5 max-md:py-[18px]">
+            {/* Only the middle scrolls, so the title and the action buttons stay in place. */}
+            <div className="fixed inset-0 flex items-center justify-center overflow-hidden px-5 py-10 max-md:px-2.5 max-md:py-[18px]">
                 <DialogPanel
-                    className={`relative my-auto w-full animate-enter rounded-[20px] bg-surface text-ink shadow-[0_24px_90px_#08162e50] ${width} ${className}`}
+                    className={`relative flex max-h-full w-full animate-enter flex-col overflow-hidden rounded-[20px] bg-surface text-ink shadow-[0_24px_90px_#08162e50] ${width} ${className}`}
                 >
                     <div
-                        className={`flex items-center justify-between gap-[18px] rounded-t-[20px] border-b border-b-line px-7 py-5 max-md:px-5 max-md:py-4 ${headingClassName}`}
+                        className={`flex shrink-0 items-center justify-between gap-[18px] rounded-t-[20px] border-b border-b-line px-7 py-5 max-md:px-5 max-md:py-4 ${headingClassName}`}
                     >
                         <DialogTitle className="font-sans text-[19px] font-semibold tracking-[-0.4px]">
                             {title}
@@ -346,7 +348,10 @@ export function Modal({
                             <Icon name="close" />
                         </button>
                     </div>
-                    {children}
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain print:overflow-visible">
+                        {children}
+                    </div>
+                    {footer}
                 </DialogPanel>
             </div>
         </Dialog>
@@ -431,7 +436,7 @@ export function CountPill({ children }) {
 export function DialogFooter({ children, className = '' }) {
     return (
         <div
-            className={`sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-b-[20px] border-t border-t-line bg-surface-alt px-[25px] py-[18px] max-md:px-[18px] max-md:py-[15px] max-md:[&_.btn]:px-[11px] max-md:[&_.btn]:py-2.5 max-md:[&_.btn]:text-[11px] ${className}`}
+            className={`flex shrink-0 items-center justify-between gap-3 rounded-b-[20px] border-t border-t-line bg-surface-alt px-[25px] py-[18px] max-md:px-[18px] max-md:py-[15px] max-md:[&_.btn]:px-[11px] max-md:[&_.btn]:py-2.5 max-md:[&_.btn]:text-[11px] ${className}`}
         >
             {children}
         </div>

@@ -249,8 +249,49 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
     );
     return (
         <>
-            <Modal title={t(item ? 'edit' : 'newRequest')} onClose={close}>
+            <Modal
+                title={t(item ? 'edit' : 'newRequest')}
+                onClose={close}
+                footer={
+                    <DialogFooter>
+                        <button
+                            type="button"
+                            className="btn ghost"
+                            disabled={busy}
+                            onClick={close}
+                        >
+                            {t('cancel')}
+                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                className="btn secondary"
+                                disabled={busy}
+                                onClick={() => save(false)}
+                            >
+                                {t(
+                                    item?.status === 'pending'
+                                        ? 'savePending'
+                                        : 'saveDraft',
+                                )}
+                            </button>
+                            {item?.status !== 'pending' && (
+                                <button
+                                    type="submit"
+                                    form="request-form"
+                                    className="btn primary"
+                                    disabled={busy}
+                                >
+                                    {t(busy ? 'working' : 'submit')}
+                                    <Icon name="arrow" size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </DialogFooter>
+                }
+            >
                 <form
+                    id="request-form"
                     onSubmit={(e) => {
                         e.preventDefault();
                         save(true);
@@ -436,40 +477,6 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                         )}
                         <FormNote icon="shield">{t('draftHelp')}</FormNote>
                     </div>
-                    <DialogFooter>
-                        <button
-                            type="button"
-                            className="btn ghost"
-                            disabled={busy}
-                            onClick={close}
-                        >
-                            {t('cancel')}
-                        </button>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                className="btn secondary"
-                                disabled={busy}
-                                onClick={() => save(false)}
-                            >
-                                {t(
-                                    item?.status === 'pending'
-                                        ? 'savePending'
-                                        : 'saveDraft',
-                                )}
-                            </button>
-                            {item?.status !== 'pending' && (
-                                <button
-                                    type="submit"
-                                    className="btn primary"
-                                    disabled={busy}
-                                >
-                                    {t(busy ? 'working' : 'submit')}
-                                    <Icon name="arrow" size={16} />
-                                </button>
-                            )}
-                        </div>
-                    </DialogFooter>
                 </form>
             </Modal>
             {discard && (
@@ -477,21 +484,23 @@ export function RequestForm({ item, initialType, onClose, onSaved, toast }) {
                     title={t('unsavedTitle')}
                     onClose={() => setDiscard(false)}
                     width="max-w-[460px]"
+                    footer={
+                        <DialogFooter>
+                            <button
+                                className="btn secondary"
+                                onClick={() => setDiscard(false)}
+                            >
+                                {t('keepEditing')}
+                            </button>
+                            <button className="btn danger" onClick={onClose}>
+                                {t('discard')}
+                            </button>
+                        </DialogFooter>
+                    }
                 >
                     <div className={dialogBody}>
                         <p className={confirmText}>{t('unsavedHelp')}</p>
                     </div>
-                    <DialogFooter>
-                        <button
-                            className="btn secondary"
-                            onClick={() => setDiscard(false)}
-                        >
-                            {t('keepEditing')}
-                        </button>
-                        <button className="btn danger" onClick={onClose}>
-                            {t('discard')}
-                        </button>
-                    </DialogFooter>
                 </Modal>
             )}
         </>
@@ -586,6 +595,66 @@ export function RequestDetail({
                 title={`REQ-${String(item.id).padStart(4, '0')}`}
                 onClose={() => !busy && onClose()}
                 width="max-w-[720px]"
+                footer={
+                    (own || canReview) && (
+                        <DialogFooter className="max-md:flex-wrap max-md:gap-[7px] max-md:[&_.btn]:px-2.5 max-md:[&_.btn]:py-[9px] max-md:[&_.btn]:text-[10px]">
+                            <div className="flex items-center gap-1">
+                                {own && item.status !== 'approved' && (
+                                    <button
+                                        className="icon-button destructive"
+                                        onClick={() => begin('delete')}
+                                        disabled={busy}
+                                        aria-label={t('delete')}
+                                        title={t('delete')}
+                                    >
+                                        <Icon name="trash" size={18} />
+                                    </button>
+                                )}
+                                {own && item.status === 'pending' && (
+                                    <button
+                                        className="btn ghost"
+                                        onClick={() => begin('cancel')}
+                                        disabled={busy}
+                                    >
+                                        {t('withdraw')}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                {own && ['draft', 'pending', 'rejected'].includes(item.status) && (
+                                    <button
+                                        className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
+                                        disabled={busy}
+                                        onClick={() => onEdit(item)}
+                                    >
+                                        <Icon name="edit" size={16} />
+                                        {t(item.status === 'rejected' ? 'revision' : 'edit')}
+                                    </button>
+                                )}
+                                {canReview && (
+                                    <>
+                                        <button
+                                            className="btn border-[#f0d6d4] bg-[#fff3f2] text-[#b04f4c]"
+                                            disabled={busy}
+                                            onClick={() => begin('rejected')}
+                                        >
+                                            <Icon name="close" size={16} />
+                                            {t('reject')}
+                                        </button>
+                                        <button
+                                            className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
+                                            disabled={busy}
+                                            onClick={() => begin('approved')}
+                                        >
+                                            <Icon name="check" size={16} />
+                                            {t(item.route_mode === 'sequential' ? 'approveStage' : 'approve')}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </DialogFooter>
+                    )
+                }
             >
                 <div className={dialogBody}>
                     <div className="flex items-center gap-4">
@@ -762,64 +831,6 @@ export function RequestDetail({
                         <FormNote icon="shield">{t('archivedNote')}</FormNote>
                     )}
                 </div>
-                {(own || canReview) && (
-                    <DialogFooter className="max-md:flex-wrap max-md:gap-[7px] max-md:[&_.btn]:px-2.5 max-md:[&_.btn]:py-[9px] max-md:[&_.btn]:text-[10px]">
-                        <div className="flex items-center gap-1">
-                            {own && item.status !== 'approved' && (
-                                <button
-                                    className="icon-button destructive"
-                                    onClick={() => begin('delete')}
-                                    disabled={busy}
-                                    aria-label={t('delete')}
-                                    title={t('delete')}
-                                >
-                                    <Icon name="trash" size={18} />
-                                </button>
-                            )}
-                            {own && item.status === 'pending' && (
-                                <button
-                                    className="btn ghost"
-                                    onClick={() => begin('cancel')}
-                                    disabled={busy}
-                                >
-                                    {t('withdraw')}
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex gap-2">
-                            {own && ['draft', 'pending', 'rejected'].includes(item.status) && (
-                                <button
-                                    className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
-                                    disabled={busy}
-                                    onClick={() => onEdit(item)}
-                                >
-                                    <Icon name="edit" size={16} />
-                                    {t(item.status === 'rejected' ? 'revision' : 'edit')}
-                                </button>
-                            )}
-                            {canReview && (
-                                <>
-                                    <button
-                                        className="btn border-[#f0d6d4] bg-[#fff3f2] text-[#b04f4c]"
-                                        disabled={busy}
-                                        onClick={() => begin('rejected')}
-                                    >
-                                        <Icon name="close" size={16} />
-                                        {t('reject')}
-                                    </button>
-                                    <button
-                                        className="btn primary bg-[#2e587f] text-white hover:bg-[#214766]"
-                                        disabled={busy}
-                                        onClick={() => begin('approved')}
-                                    >
-                                        <Icon name="check" size={16} />
-                                        {t(item.route_mode === 'sequential' ? 'approveStage' : 'approve')}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </DialogFooter>
-                )}
             </Modal>
             {action && (
                 <Modal
@@ -832,6 +843,32 @@ export function RequestDetail({
                     )}
                     onClose={() => !busy && setAction(null)}
                     width="max-w-[460px]"
+                    footer={
+                        <DialogFooter>
+                            <button
+                                className="btn secondary"
+                                disabled={busy}
+                                onClick={() => setAction(null)}
+                            >
+                                {t('cancel')}
+                            </button>
+                            <button
+                                className={`btn ${['delete', 'rejected'].includes(action) ? 'danger' : 'primary'}`}
+                                disabled={busy}
+                                onClick={perform}
+                            >
+                                {t(
+                                    busy
+                                        ? 'working'
+                                        : action === 'approved'
+                                          ? 'approve'
+                                          : action === 'rejected'
+                                            ? 'reject'
+                                            : 'confirm',
+                                )}
+                            </button>
+                        </DialogFooter>
+                    }
                 >
                     <div className={dialogBody}>
                         <p className={confirmText}>
@@ -871,30 +908,6 @@ export function RequestDetail({
                             </>
                         )}
                     </div>
-                    <DialogFooter>
-                        <button
-                            className="btn secondary"
-                            disabled={busy}
-                            onClick={() => setAction(null)}
-                        >
-                            {t('cancel')}
-                        </button>
-                        <button
-                            className={`btn ${['delete', 'rejected'].includes(action) ? 'danger' : 'primary'}`}
-                            disabled={busy}
-                            onClick={perform}
-                        >
-                            {t(
-                                busy
-                                    ? 'working'
-                                    : action === 'approved'
-                                      ? 'approve'
-                                      : action === 'rejected'
-                                        ? 'reject'
-                                        : 'confirm',
-                            )}
-                        </button>
-                    </DialogFooter>
                 </Modal>
             )}
         </>

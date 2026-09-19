@@ -1266,8 +1266,27 @@ function WorkspaceContent({ initialUser, realtime }) {
                 />
             )}
             {searchModal && (
-                <Modal title={t('findAnything')} onClose={() => setSearchModal(false)}>
+                <Modal
+                    title={t('findAnything')}
+                    onClose={() => setSearchModal(false)}
+                    footer={
+                        <DialogFooter>
+                            <kbd className="rounded border border-line bg-surface-alt px-2 py-1 text-[10px]">
+                                Ctrl / ⌘ K
+                            </kbd>
+                            <button
+                                type="submit"
+                                form="search-form"
+                                className="btn primary"
+                            >
+                                <Icon name="search" size={17} />
+                                {t('findAnything')}
+                            </button>
+                        </DialogFooter>
+                    }
+                >
                     <form
+                        id="search-form"
                         onSubmit={(e) => {
                             e.preventDefault();
                             navigate('requests');
@@ -1286,15 +1305,6 @@ function WorkspaceContent({ initialUser, realtime }) {
                                 />
                             </Field>
                         </div>
-                        <DialogFooter>
-                            <kbd className="rounded border border-line bg-surface-alt px-2 py-1 text-[10px]">
-                                Ctrl / ⌘ K
-                            </kbd>
-                            <button className="btn primary">
-                                <Icon name="search" size={17} />
-                                {t('findAnything')}
-                            </button>
-                        </DialogFooter>
                     </form>
                 </Modal>
             )}
