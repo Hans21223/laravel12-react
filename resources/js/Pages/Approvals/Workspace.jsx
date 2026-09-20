@@ -29,6 +29,7 @@ import {
     DatabaseViewer,
 } from './OrganizationPanels';
 import Messages from './Messages';
+import Messenger from './Messenger';
 import VisualDebug, { useVisualTrace, CrudDemo } from './VisualDebug';
 import { useWorkspaceCalls } from './Calls';
 import { connectRealtime, onRealtime } from '../../realtime';
@@ -711,11 +712,11 @@ function HelpView({ heading }) {
     );
 }
 
-function Toasts({ items, onDismiss }) {
+function Toasts({ items, onDismiss, lifted }) {
     const { t } = useLocale();
     return (
         <div
-            className="fixed bottom-[25px] right-[25px] z-[100] flex w-[calc(100%_-_40px)] max-w-[430px] flex-col gap-[9px] max-md:bottom-[15px] max-md:right-[15px] max-md:w-[400px] max-md:max-w-[calc(100%_-_30px)] print:!hidden"
+            className={`fixed bottom-[25px] right-[25px] z-[100] flex w-[calc(100%_-_40px)] max-w-[430px] flex-col gap-[9px] max-md:bottom-[15px] max-md:right-[15px] max-md:w-[400px] max-md:max-w-[calc(100%_-_30px)] print:!hidden ${lifted ? 'mb-[72px]' : ''}`}
             aria-live="polite"
         >
             {items.map((item) => (
@@ -990,6 +991,18 @@ function WorkspaceContent({ initialUser, realtime }) {
         refresh,
         preferences.page_size,
     ]);
+    // A short heads-up when something new lands in your inbox; the bell keeps the history.
+    const lastNotice = useRef(null);
+    useEffect(() => {
+        const top = notifications.items[0];
+        if (!top) return;
+        const previous = lastNotice.current;
+        lastNotice.current = top.id;
+        if (previous === null || top.id <= previous || top.read_at) return;
+        toast(
+            `${t(`notification${top.action[0].toUpperCase()}${top.action.slice(1)}`)} · ${top.title}`,
+        );
+    }, [notifications.items]);
     const reload = () => setRefresh((r) => r + 1);
     const openDetail = useRef(null);
     openDetail.current = detail?.id;
@@ -1248,6 +1261,18 @@ function WorkspaceContent({ initialUser, realtime }) {
                     </footer>
                 </main>
             </div>
+            {user.tenancy_enabled && view !== 'messages' && (
+                <Messenger
+                    user={user}
+                    peer={chatPeer}
+                    setPeer={setChatPeer}
+                    onDirectory={() => navigate('employees')}
+                    onExpand={() => navigate('messages')}
+                    onCall={calls.start}
+                    callsAvailable={calls.available}
+                    toast={toast}
+                />
+            )}
             {calls.panel}
             {detail && !form && (
                 <RequestDetail
@@ -1319,6 +1344,7 @@ function WorkspaceContent({ initialUser, realtime }) {
                 </Modal>
             )}
             <Toasts
+                lifted={user.tenancy_enabled}
                 items={toastItems}
                 onDismiss={(id) => setToastItems((items) => items.filter((x) => x.id !== id))}
             />

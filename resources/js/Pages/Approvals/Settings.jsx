@@ -376,14 +376,15 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
         }
     }
     // Switches and dropdowns apply straight away; only the forms keep a save button.
-    async function commit(next) {
+    // The theme passes its new value in: its own state has not settled when the request goes out.
+    async function commit(next, mode = theme) {
         setPreferences(next);
         try {
             const { data } = await axios.patch('/api/approvals/preferences', {
                 name,
                 department,
                 locale,
-                preferences: { ...next, theme },
+                preferences: { ...next, theme: mode },
             });
             setUser((current) => ({ ...current, ...data }));
         } catch (e) {
@@ -530,7 +531,10 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
                             <button
                                 key={mode}
                                 type="button"
-                                onClick={() => setTheme(mode)}
+                                onClick={() => {
+                                    setTheme(mode);
+                                    commit(preferences, mode);
+                                }}
                                 aria-pressed={theme === mode}
                                 className={`min-w-0 flex-1 rounded-lg border bg-surface p-2 ${theme === mode ? 'border-brand bg-brand-tint' : 'border-line'}`}
                             >

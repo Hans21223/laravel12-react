@@ -16,6 +16,7 @@ export default function Messages({
     onCall,
     callsAvailable,
     toast,
+    compact = false,
 }) {
     const { t, date } = useLocale();
     const [conversations, setConversations] = useState([]),
@@ -151,21 +152,33 @@ export default function Messages({
         </button>
     );
     return (
-        <section className="panel grid h-[min(720px,calc(100dvh_-_220px))] min-h-[430px] grid-cols-[280px_minmax(0,1fr)] overflow-hidden max-lg:grid-cols-[220px_minmax(0,1fr)] max-sm:block max-sm:h-[calc(100dvh_-_200px)]">
+        <section
+            className={
+                compact
+                    ? 'flex h-full min-h-0 flex-col overflow-hidden'
+                    : 'panel grid h-[min(720px,calc(100dvh_-_220px))] min-h-[430px] grid-cols-[280px_minmax(0,1fr)] overflow-hidden max-lg:grid-cols-[220px_minmax(0,1fr)] max-sm:block max-sm:h-[calc(100dvh_-_200px)]'
+            }
+        >
             <aside
-                className={`overflow-y-auto border-r border-r-line bg-surface-alt max-sm:h-full ${peer ? 'max-sm:hidden' : ''}`}
+                className={
+                    compact
+                        ? `min-h-0 flex-1 overflow-y-auto bg-surface-alt ${peer ? 'hidden' : ''}`
+                        : `overflow-y-auto border-r border-r-line bg-surface-alt max-sm:h-full ${peer ? 'max-sm:hidden' : ''}`
+                }
             >
-                <header className="flex items-center justify-between border-b border-b-line p-[18px]">
-                    <h3 className="font-[650]">{t('messages')}</h3>
-                    <button
-                        className="icon-button"
-                        title={t('newConversation')}
-                        aria-label={t('newConversation')}
-                        onClick={onDirectory}
-                    >
-                        <Icon name="plus" />
-                    </button>
-                </header>
+                {!compact && (
+                    <header className="flex items-center justify-between border-b border-b-line p-[18px]">
+                        <h3 className="font-[650]">{t('messages')}</h3>
+                        <button
+                            className="icon-button"
+                            title={t('newConversation')}
+                            aria-label={t('newConversation')}
+                            onClick={onDirectory}
+                        >
+                            <Icon name="plus" />
+                        </button>
+                    </header>
+                )}
                 {conversations.map(
                     (conversation) =>
                         conversation.peer && (
@@ -193,12 +206,20 @@ export default function Messages({
                     <p className="m-0 p-5 text-[12px] leading-[1.6] text-muted">{t('noConversations')}</p>
                 )}
             </aside>
-            <div className={`min-h-0 min-w-0 flex-col max-sm:h-full ${peer ? 'flex' : 'flex max-sm:hidden'}`}>
+            <div
+                className={
+                    compact
+                        ? `min-h-0 min-w-0 flex-1 flex-col ${peer ? 'flex' : 'hidden'}`
+                        : `min-h-0 min-w-0 flex-col max-sm:h-full ${peer ? 'flex' : 'flex max-sm:hidden'}`
+                }
+            >
                 {peer ? (
                     <>
-                        <header className="flex items-center gap-3 border-b border-b-line px-[22px] py-4 max-sm:gap-2 max-sm:p-3">
+                        <header
+                            className={`flex items-center gap-3 border-b border-b-line max-sm:gap-2 max-sm:p-3 ${compact ? 'gap-2 p-3' : 'px-[22px] py-4'}`}
+                        >
                             <button
-                                className="icon-button hidden max-sm:inline-flex"
+                                className={`icon-button ${compact ? 'inline-flex' : 'hidden max-sm:inline-flex'}`}
                                 onClick={() => setPeer(null)}
                                 aria-label={t('backToConversations')}
                             >
@@ -217,7 +238,7 @@ export default function Messages({
                             {call('video')}
                         </header>
                         <div
-                            className="flex flex-1 flex-col gap-3 overflow-y-auto p-6 max-sm:p-4"
+                            className={`flex flex-1 flex-col gap-3 overflow-y-auto max-sm:p-4 ${compact ? 'p-4' : 'p-6'}`}
                             ref={scroller}
                             onScroll={() => {
                                 const el = scroller.current;
@@ -250,7 +271,10 @@ export default function Messages({
                                 );
                             })}
                         </div>
-                        <form className="flex items-center gap-3 border-t border-t-line p-[18px] max-sm:gap-2 max-sm:p-3" onSubmit={send}>
+                        <form
+                            className={`flex items-center gap-3 border-t border-t-line max-sm:gap-2 max-sm:p-3 ${compact ? 'gap-2 p-3' : 'p-[18px]'}`}
+                            onSubmit={send}
+                        >
                             <label className="sr-only" htmlFor="dm-body">
                                 {t('messageBody')}
                             </label>
