@@ -611,7 +611,7 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
                     </button>
                 ))}
             </nav>
-            <div className="min-w-0 max-w-[880px] flex-1">{panels[section]}</div>
+            <div className="min-w-0 max-w-[620px] flex-1">{panels[section]}</div>
         </div>
     );
 }
