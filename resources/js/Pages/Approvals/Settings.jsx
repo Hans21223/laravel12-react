@@ -7,11 +7,23 @@ import { errorText } from './RequestDialogs';
 
 export const defaultPreferences = {
     theme: 'light',
+    accent: 'red',
     density: 'comfortable',
     page_size: 8,
     default_view: 'list',
+    start_view: 'overview',
+    show_banner: true,
     reduce_motion: false,
     visual_debug: false,
+};
+
+// Accent pairs drive --signal, the colour used by primary buttons and highlights.
+export const accents = {
+    red: ['#d44555', '#b73143'],
+    blue: ['#3a6ea8', '#2f5a8c'],
+    green: ['#3f8368', '#336b55'],
+    violet: ['#6c5ab0', '#584794'],
+    amber: ['#b8802f', '#9a6a26'],
 };
 
 const body = 'p-[25px] max-md:p-5 max-xs:p-[19px] [&>.btn]:mt-1';
@@ -384,6 +396,7 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
         ['profile', 'user', t('profile')],
         ['security', 'shield', t('securitySettings')],
         ['appearance', 'sun', t('appearance')],
+        ['personalization', 'spark', t('personalization')],
         ['requests', 'list', t('requestPreferences')],
         ['tools', 'monitor', t('settingsGroupTools')],
     ];
@@ -416,7 +429,65 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
                         </form>
                     </div>
                 </Group>
-                <Group title={t('language')}>
+            </>
+        ),
+        personalization: (
+            <>
+                <Group title={t('accent')}>
+                    <div className="p-5 max-xs:p-4">
+                        <p className="mb-3 text-[12px] leading-[1.6] text-muted">{t('accentHelp')}</p>
+                        <div className="flex flex-wrap gap-2.5">
+                            {Object.entries(accents).map(([key, [colour]]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    aria-label={t(`accent${key[0].toUpperCase()}${key.slice(1)}`)}
+                                    aria-pressed={preferences.accent === key}
+                                    onClick={() => commit({ ...preferences, accent: key })}
+                                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] font-semibold ${
+                                        preferences.accent === key ? 'border-ink' : 'border-line hover:bg-surface-alt'
+                                    }`}
+                                >
+                                    <span className="size-4 rounded-full" style={{ background: colour }} />
+                                    {t(`accent${key[0].toUpperCase()}${key.slice(1)}`)}
+                                    {preferences.accent === key && <Icon name="check" size={15} />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </Group>
+                <Group title={t('workspaceLayout')}>
+                    <Row
+                        icon="grid"
+                        title={t('showBanner')}
+                        description={t('showBannerHelp')}
+                        control={
+                            <Switch
+                                label={t('showBanner')}
+                                checked={preferences.show_banner !== false}
+                                onChange={(value) => commit({ ...preferences, show_banner: value })}
+                            />
+                        }
+                    />
+                    <Row
+                        icon="spark"
+                        title={t('startPage')}
+                        description={t('startPageHelp')}
+                        control={
+                            <select
+                                className={rowSelect}
+                                value={preferences.start_view}
+                                aria-label={t('startPage')}
+                                onChange={(e) => commit({ ...preferences, start_view: e.target.value })}
+                            >
+                                {['overview', 'mine', ...(user.role === 'manager' ? ['review'] : []), 'requests'].map((value) => (
+                                    <option key={value} value={value}>
+                                        {t(value)}
+                                    </option>
+                                ))}
+                            </select>
+                        }
+                    />
                     <Row
                         icon="globe"
                         title={t('language')}
@@ -588,7 +659,7 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
     };
 
     return (
-        <div className="flex gap-8 max-lg:flex-col max-lg:gap-5">
+        <div className="mx-auto flex w-full max-w-[900px] gap-8 max-lg:flex-col max-lg:gap-5">
             {/* Categories on the left, like a browser settings page; a scrollable strip on phones. */}
             <nav
                 aria-label={t('settings')}

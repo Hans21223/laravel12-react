@@ -294,6 +294,7 @@ export function RequestTable({ rows, onOpen, compact = false }) {
 export default function Dashboard({ summary, user, onNavigate, onNew, onOpen, onFilter }) {
     const { t, date, number } = useLocale();
     const manager = user.role === 'manager';
+    const banner = user.preferences?.show_banner !== false;
     return (
         <>
             <PageHeading
@@ -317,7 +318,8 @@ export default function Dashboard({ summary, user, onNavigate, onNew, onOpen, on
                     </div>
                 }
             />
-            <div className="mb-6 grid grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] gap-5 max-lg:grid-cols-1">
+            <div className={`mb-6 grid gap-5 max-lg:grid-cols-1 ${banner ? 'grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)]' : 'grid-cols-1'}`}>
+                {banner && (
                 <section className="dashboard-hero !mb-0">
                     <div className="z-[1] max-w-[68%] max-xl:max-w-[71%] max-lg:max-w-[82%] max-md:max-w-[90%]">
                         <span className="inline-flex items-center gap-[7px] font-mono text-[9px] font-semibold tracking-[1px] text-[#9cb7d5]">
@@ -351,6 +353,7 @@ export default function Dashboard({ summary, user, onNavigate, onNew, onOpen, on
                     </div>
                     <TechnicalArt />
                 </section>
+                )}
                 <section className="panel p-5">
                     <h2 className="text-[16px] font-semibold tracking-[-0.3px]">{t('quickCreate')}</h2>
                     <p className="mb-3 mt-1.5 text-[12px] leading-relaxed text-muted">

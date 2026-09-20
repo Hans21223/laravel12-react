@@ -325,8 +325,11 @@ class ApprovalController extends Controller
             'name' => 'required|string|max:100',
             'department' => ['required', Rule::in(['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'])],
             'locale' => ['required', Rule::in(['en', 'th', 'ja'])],
-            'preferences' => 'sometimes|array:theme,density,page_size,default_view,reduce_motion,visual_debug',
+            'preferences' => 'sometimes|array:theme,accent,density,page_size,default_view,start_view,show_banner,reduce_motion,visual_debug',
             'preferences.theme' => ['sometimes', Rule::in(['light', 'dark', 'system'])],
+            'preferences.accent' => ['sometimes', Rule::in(['red', 'blue', 'green', 'violet', 'amber'])],
+            'preferences.start_view' => ['sometimes', Rule::in(['overview', 'mine', 'review', 'requests'])],
+            'preferences.show_banner' => 'sometimes|boolean',
             'preferences.density' => ['sometimes', Rule::in(['comfortable', 'compact'])],
             'preferences.page_size' => ['sometimes', 'integer', Rule::in([8, 16, 24])],
             'preferences.default_view' => ['sometimes', Rule::in(['list', 'board'])],
@@ -337,8 +340,10 @@ class ApprovalController extends Controller
             if (array_key_exists('page_size', $data['preferences'])) {
                 $data['preferences']['page_size'] = (int) $data['preferences']['page_size'];
             }
-            if (array_key_exists('reduce_motion', $data['preferences'])) {
-                $data['preferences']['reduce_motion'] = (bool) $data['preferences']['reduce_motion'];
+            foreach (['reduce_motion', 'show_banner'] as $flag) {
+                if (array_key_exists($flag, $data['preferences'])) {
+                    $data['preferences'][$flag] = (bool) $data['preferences'][$flag];
+                }
             }
             if (array_key_exists('visual_debug', $data['preferences'])) {
                 $data['preferences']['visual_debug'] = (bool) $data['preferences']['visual_debug'];
@@ -354,8 +359,9 @@ class ApprovalController extends Controller
     public function resetPreferences(Request $request)
     {
         $request->user()->forceFill(['locale' => 'en', 'preferences' => [
-            'theme' => 'light', 'density' => 'comfortable', 'page_size' => 8,
-            'default_view' => 'list', 'reduce_motion' => false, 'visual_debug' => false,
+            'theme' => 'light', 'accent' => 'red', 'density' => 'comfortable', 'page_size' => 8,
+            'default_view' => 'list', 'start_view' => 'overview', 'show_banner' => true,
+            'reduce_motion' => false, 'visual_debug' => false,
         ]])->save();
 
         return $request->user()->fresh()->settingsPayload();

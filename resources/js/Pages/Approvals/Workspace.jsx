@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
-import Settings, { defaultPreferences } from './Settings';
+import Settings, { accents, defaultPreferences } from './Settings';
 import { Head, router, usePage } from '@inertiajs/react';
 import { LocaleProvider, useLocale } from './i18n';
 import {
@@ -63,9 +63,9 @@ const navIcons = {
     settings: 'settings',
     help: 'help',
 };
-const initialView = () => {
+const initialView = (start = 'overview') => {
     const value = new URLSearchParams(location.search).get('view');
-    return views.includes(value) ? value : 'overview';
+    return views.includes(value) ? value : start;
 };
 const requestId = (id) => `REQ-${String(id).padStart(4, '0')}`;
 
@@ -750,7 +750,7 @@ function WorkspaceContent({ initialUser, realtime }) {
         );
     const { t, money, locale, setLocale } = useLocale();
     const [user, setUser] = useState(initialUser),
-        [view, setView] = useState(initialView),
+        [view, setView] = useState(() => initialView(initialUser.preferences?.start_view)),
         [theme, setTheme] = useState(
             () =>
                 initialUser.preferences?.theme ||
@@ -799,6 +799,16 @@ function WorkspaceContent({ initialUser, realtime }) {
         );
         return () => delete document.documentElement.dataset.reduceMotion;
     }, [preferences.reduce_motion]);
+    // The accent colour drives primary buttons and highlights across the workspace.
+    useEffect(() => {
+        const [signal, hover] = accents[preferences.accent] ?? accents.red;
+        document.documentElement.style.setProperty('--signal', signal);
+        document.documentElement.style.setProperty('--signal-hover', hover);
+        return () => {
+            document.documentElement.style.removeProperty('--signal');
+            document.documentElement.style.removeProperty('--signal-hover');
+        };
+    }, [preferences.accent]);
     const [loading, setLoading] = useState(true),
         [listLoading, setListLoading] = useState(false),
         [error, setError] = useState(null),

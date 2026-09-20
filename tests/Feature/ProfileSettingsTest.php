@@ -50,6 +50,25 @@ class ProfileSettingsTest extends TestCase
         $this->getJson($url)->assertUnauthorized();
     }
 
+    public function test_personalization_preferences_are_saved_and_validated(): void
+    {
+        $user = User::factory()->create();
+        $payload = ['name' => 'Profile Test', 'department' => 'Operations', 'locale' => 'en',
+            'preferences' => ['accent' => 'blue', 'start_view' => 'mine', 'show_banner' => false]];
+
+        $this->actingAs($user)->patchJson('/api/approvals/preferences', $payload)
+            ->assertOk()
+            ->assertJsonPath('preferences.accent', 'blue')
+            ->assertJsonPath('preferences.start_view', 'mine')
+            ->assertJsonPath('preferences.show_banner', false);
+
+        $payload['preferences'] = ['accent' => 'neon'];
+        $this->patchJson('/api/approvals/preferences', $payload)->assertUnprocessable();
+
+        $payload['preferences'] = ['start_view' => 'database'];
+        $this->patchJson('/api/approvals/preferences', $payload)->assertUnprocessable();
+    }
+
     public function test_preferences_persist_merge_and_cannot_escalate_roles(): void
     {
         $user = User::factory()->create();
