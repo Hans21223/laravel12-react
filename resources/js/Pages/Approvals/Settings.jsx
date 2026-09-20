@@ -18,17 +18,69 @@ const body = 'p-[25px] max-md:p-5 max-xs:p-[19px] [&>.btn]:mt-1';
 const hint = 'm-0 mb-4 text-[12px] leading-[1.6] text-muted';
 const errorLine = 'mt-2 block text-[12px] text-[#d14858]';
 
-function Card({ title, icon, children, className = '' }) {
+function Group({ title, children }) {
     return (
-        <section className={`panel mb-6 ${className}`}>
-            <div className="panel-heading border-b border-b-line">
-                <h3>{title}</h3>
-                <Icon name={icon} size={19} />
+        <section className="mb-7">
+            <h3 className="mb-2.5 px-1 text-[12px] font-semibold text-muted">{title}</h3>
+            <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+                {children}
             </div>
-            {children}
         </section>
     );
 }
+
+// One line per setting: icon, name, current value. Long forms open underneath.
+function Row({ icon, title, description, control, children, danger = false, onClick }) {
+    const { t } = useLocale();
+    const [open, setOpen] = useState(false);
+    const expandable = !!children;
+    const Tag = expandable || onClick ? 'button' : 'div';
+    return (
+        <div>
+            <Tag
+                type={expandable || onClick ? 'button' : undefined}
+                onClick={expandable ? () => setOpen((value) => !value) : onClick}
+                aria-expanded={expandable ? open : undefined}
+                className={`flex w-full items-center gap-4 px-5 py-4 text-left max-xs:px-4 ${expandable || onClick ? 'hover:bg-surface-alt' : ''}`}
+            >
+                <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${danger ? 'bg-[#f7e7e6] text-[#b2564e] dark:bg-[#4a2b30]' : 'bg-brand-tint text-brand'}`}>
+                    <Icon name={icon} size={18} />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <strong className={`block text-[13px] font-semibold ${danger ? 'text-[#b2564e]' : ''}`}>{title}</strong>
+                    {description && (
+                        <small className="mt-0.5 block text-[12px] leading-[1.6] text-muted">{description}</small>
+                    )}
+                </span>
+                {control && <span className="shrink-0" onClick={(e) => e.stopPropagation()}>{control}</span>}
+                {expandable && (
+                    <Icon name="down" size={18} className={`shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+                )}
+                {onClick && !control && <Icon name="right" size={18} className="shrink-0 text-muted" />}
+            </Tag>
+            {expandable && open && (
+                <div className="border-t border-t-line bg-surface-alt px-5 py-5 max-xs:px-4" aria-label={title}>
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function Switch({ checked, onChange, label }) {
+    return (
+        <input
+            type="checkbox"
+            className="settings-toggle"
+            checked={checked}
+            aria-label={label}
+            onChange={(e) => onChange(e.target.checked)}
+        />
+    );
+}
+
+const rowSelect =
+    'rounded-lg border border-line bg-surface px-3 py-2 text-[12px] text-ink';
 
 function Toggle({ label, help, checked, onChange }) {
     return (
@@ -185,9 +237,7 @@ function PasswordSettings({ toast }) {
     }
     return (
         <form onSubmit={save}>
-            <Card title={t('securitySettings')} icon="shield">
-                <div className={body}>
-                    <p className={hint}>{t('passwordChangeHint')}</p>
+                <div>
                     {Object.keys(values).map((key) => (
                         <Field
                             key={key}
@@ -213,7 +263,6 @@ function PasswordSettings({ toast }) {
                         {t(busy ? 'working' : 'updatePassword')}
                     </button>
                 </div>
-            </Card>
         </form>
     );
 }
@@ -242,8 +291,7 @@ function DeleteAccount() {
     }
     return (
         <form onSubmit={submit}>
-            <Card title={t('deleteAccount')} icon="trash" className="border-[#f0d6d4] dark:border-[#5b3440]">
-                <div className={body}>
+                <div>
                     <p className={hint}>{t('deleteAccountHelp')}</p>
                     <Field label={t('currentPassword')}>
                         <input
@@ -265,7 +313,6 @@ function DeleteAccount() {
                         {t(busy ? 'working' : 'deleteAccountButton')}
                     </button>
                 </div>
-            </Card>
         </form>
     );
 }
@@ -316,152 +363,255 @@ export default function Settings({ user, setUser, theme, setTheme, toast }) {
             setBusy(false);
         }
     }
-    const saveButton = (
-        <button type="submit" form="profile-settings-form" className="btn primary" disabled={busy || !name.trim()}>
-            {t(busy ? 'working' : 'save')}
-        </button>
-    );
-    return (
-        // Cards flow into as many columns as the screen fits, so wide screens have no empty band.
-        <div className="gap-6 lg:columns-2 2xl:columns-3 [&_section]:break-inside-avoid">
-            <form onSubmit={save} id="profile-settings-form">
-                <Card title={t('profile')} icon="user">
-                    <div className={body}>
-                        <ProfilePhoto user={user} setUser={setUser} toast={toast} />
-                        <Field label={t('fullName')}>
-                            <input required minLength={1} maxLength={100} value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} />
-                        </Field>
-                        <Field label={t('email')}>
-                            <input value={user.email} disabled type="email" />
-                        </Field>
-                        <Field label={t('department')}>
-                            <select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                                {['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'].map((d) => (
-                                    <option key={d} value={d}>
-                                        {t(`dept${d}`)}
+    // Switches and dropdowns apply straight away; only the forms keep a save button.
+    async function commit(next) {
+        setPreferences(next);
+        try {
+            const { data } = await axios.patch('/api/approvals/preferences', {
+                name,
+                department,
+                locale,
+                preferences: { ...next, theme },
+            });
+            setUser((current) => ({ ...current, ...data }));
+        } catch (e) {
+            toast(errorText(e, t), 'error');
+        }
+    }
+    const languages = { en: 'English', th: 'ไทย', ja: '日本語' };
+    const [section, setSection] = useState('profile');
+    const sections = [
+        ['profile', 'user', t('profile')],
+        ['security', 'shield', t('securitySettings')],
+        ['appearance', 'sun', t('appearance')],
+        ['requests', 'list', t('requestPreferences')],
+        ['tools', 'monitor', t('settingsGroupTools')],
+    ];
+
+    const panels = {
+        profile: (
+            <>
+                <Group title={t('profile')}>
+                    <div className="p-5 max-xs:p-4">
+                        <form onSubmit={save} id="profile-settings-form">
+                            <ProfilePhoto user={user} setUser={setUser} toast={toast} />
+                            <Field label={t('fullName')}>
+                                <input required minLength={1} maxLength={100} value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} />
+                            </Field>
+                            <Field label={t('email')}>
+                                <input value={user.email} disabled type="email" />
+                            </Field>
+                            <Field label={t('department')}>
+                                <select value={department} onChange={(e) => setDepartment(e.target.value)}>
+                                    {['Operations', 'Engineering', 'Design', 'Finance', 'People', 'Marketing'].map((d) => (
+                                        <option key={d} value={d}>
+                                            {t(`dept${d}`)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <button className="btn primary" disabled={busy || !name.trim()}>
+                                {t(busy ? 'working' : 'save')}
+                            </button>
+                        </form>
+                    </div>
+                </Group>
+                <Group title={t('language')}>
+                    <Row
+                        icon="globe"
+                        title={t('language')}
+                        description={languages[locale]}
+                        control={
+                            <select className={rowSelect} value={locale} onChange={(e) => setLocale(e.target.value)} aria-label={t('language')}>
+                                {Object.entries(languages).map(([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {label}
                                     </option>
                                 ))}
                             </select>
-                        </Field>
-                        <Field label={t('language')}>
-                            <select value={locale} onChange={(e) => setLocale(e.target.value)}>
-                                <option value="en">English</option>
-                                <option value="th">ไทย</option>
-                                <option value="ja">日本語</option>
-                            </select>
-                        </Field>
-                        <button className="btn primary" disabled={busy || !name.trim()}>
-                            {t(busy ? 'working' : 'save')}
-                        </button>
-                    </div>
-                </Card>
-            </form>
-            <PasswordSettings toast={toast} />
-            <Card title={t('appearance')} icon="sun">
-                <div className="flex gap-2 px-[23px] pb-0 pt-[23px] max-xs:px-[19px] max-xs:pt-[19px]">
-                    {['light', 'dark', 'system'].map((mode) => (
-                        <button
-                            key={mode}
-                            type="button"
-                            onClick={() => setTheme(mode)}
-                            aria-pressed={theme === mode}
-                            className={`min-w-0 flex-1 rounded-lg border p-2 ${theme === mode ? 'border-brand bg-brand-tint' : 'border-line'}`}
-                        >
-                            <div
-                                className={`flex h-[68px] overflow-hidden rounded-[5px] border [&>div>i]:mb-1.5 [&>div>i]:block [&>div>i]:h-3 [&>div>i]:rounded-sm [&>div>i]:border [&>i]:h-full [&>i]:w-1/4 ${mode === 'light' ? '[&>div>i]:border-[#dde4ed] [&>div>i]:bg-white [&>i]:bg-[#1e3452]' : ''} ${themePreview[mode]}`}
+                        }
+                    />
+                </Group>
+            </>
+        ),
+        security: (
+            <>
+                <Group title={t('securitySettings')}>
+                    <Row icon="shield" title={t('updatePassword')} description={t('passwordChangeHint')}>
+                        <PasswordSettings toast={toast} />
+                    </Row>
+                    <Row icon="user" title={`${t('accountRole')}: ${t(user.role)}`} description={t('roleHelp')} />
+                    <Row icon="logout" title={t('logout')} description={t('logoutHelp')} onClick={() => router.post('/logout')} />
+                </Group>
+                <Group title={t('deleteAccount')}>
+                    <Row icon="trash" title={t('deleteAccount')} description={t('deleteAccountHelp')} danger>
+                        <DeleteAccount />
+                    </Row>
+                </Group>
+            </>
+        ),
+        appearance: (
+            <Group title={t('appearance')}>
+                <div className="p-5 max-xs:p-4">
+                    <div className="mb-1 text-[12px] font-semibold">{t('theme')}</div>
+                    <div className="mt-3 flex gap-2 max-xs:flex-col">
+                        {['light', 'dark', 'system'].map((mode) => (
+                            <button
+                                key={mode}
+                                type="button"
+                                onClick={() => setTheme(mode)}
+                                aria-pressed={theme === mode}
+                                className={`min-w-0 flex-1 rounded-lg border bg-surface p-2 ${theme === mode ? 'border-brand bg-brand-tint' : 'border-line'}`}
                             >
-                                <i />
-                                <div className="flex-1 px-[9px] py-3">
+                                <div
+                                    className={`flex h-[68px] overflow-hidden rounded-[5px] border [&>div>i]:mb-1.5 [&>div>i]:block [&>div>i]:h-3 [&>div>i]:rounded-sm [&>div>i]:border [&>i]:h-full [&>i]:w-1/4 ${mode === 'light' ? '[&>div>i]:border-[#dde4ed] [&>div>i]:bg-white [&>i]:bg-[#1e3452]' : ''} ${themePreview[mode]}`}
+                                >
                                     <i />
-                                    <i />
-                                    <i />
+                                    <div className="flex-1 px-[9px] py-3">
+                                        <i />
+                                        <i />
+                                        <i />
+                                    </div>
                                 </div>
-                            </div>
-                            <span className="flex flex-wrap items-center gap-[5px] px-1 pb-[3px] pt-[11px] text-[11px]">
-                                <Icon name={{ light: 'sun', dark: 'moon', system: 'monitor' }[mode]} size={16} />
-                                {t(mode)}
-                                {theme === mode && <Icon name="check" size={16} className="ml-auto" />}
-                            </span>
-                        </button>
-                    ))}
+                                <span className="flex flex-wrap items-center gap-[5px] px-1 pb-[3px] pt-[11px] text-[11px]">
+                                    <Icon name={{ light: 'sun', dark: 'moon', system: 'monitor' }[mode]} size={16} />
+                                    {t(mode)}
+                                    {theme === mode && <Icon name="check" size={16} className="ml-auto" />}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className={`${body} pt-5`}>
-                    <Field label={t('density')}>
-                        <select value={preferences.density} onChange={(e) => change('density', e.target.value)}>
+                <Row
+                    icon="grid"
+                    title={t('density')}
+                    description={t(preferences.density)}
+                    control={
+                        <select
+                            className={rowSelect}
+                            value={preferences.density}
+                            aria-label={t('density')}
+                            onChange={(e) => commit({ ...preferences, density: e.target.value })}
+                        >
                             {['comfortable', 'compact'].map((value) => (
                                 <option key={value} value={value}>
                                     {t(value)}
                                 </option>
                             ))}
                         </select>
-                    </Field>
-                    <Toggle
-                        label={t('reduceMotion')}
-                        help={t('reduceMotionHelp')}
-                        checked={preferences.reduce_motion}
-                        onChange={(value) => change('reduce_motion', value)}
-                    />
-                </div>
-            </Card>
-            <Card title={t('requestPreferences')} icon="list">
-                <div className={body}>
-                    <Field label={t('rowsPerPage')}>
-                        <select value={preferences.page_size} onChange={(e) => change('page_size', Number(e.target.value))}>
+                    }
+                />
+                <Row
+                    icon="refresh"
+                    title={t('reduceMotion')}
+                    description={t('reduceMotionHelp')}
+                    control={
+                        <Switch
+                            label={t('reduceMotion')}
+                            checked={preferences.reduce_motion}
+                            onChange={(value) => commit({ ...preferences, reduce_motion: value })}
+                        />
+                    }
+                />
+            </Group>
+        ),
+        requests: (
+            <Group title={t('requestPreferences')}>
+                <Row
+                    icon="list"
+                    title={t('rowsPerPage')}
+                    description={t('preferencesHelp')}
+                    control={
+                        <select
+                            className={rowSelect}
+                            value={preferences.page_size}
+                            aria-label={t('rowsPerPage')}
+                            onChange={(e) => commit({ ...preferences, page_size: Number(e.target.value) })}
+                        >
                             {[8, 16, 24].map((size) => (
                                 <option key={size} value={size}>
                                     {size}
                                 </option>
                             ))}
                         </select>
-                    </Field>
-                    <Field label={t('defaultView')}>
-                        <select value={preferences.default_view} onChange={(e) => change('default_view', e.target.value)}>
+                    }
+                />
+                <Row
+                    icon="board"
+                    title={t('defaultView')}
+                    description={t(preferences.default_view)}
+                    control={
+                        <select
+                            className={rowSelect}
+                            value={preferences.default_view}
+                            aria-label={t('defaultView')}
+                            onChange={(e) => commit({ ...preferences, default_view: e.target.value })}
+                        >
                             {['list', 'board'].map((value) => (
                                 <option key={value} value={value}>
                                     {t(value)}
                                 </option>
                             ))}
                         </select>
-                    </Field>
-                    <p className={hint}>{t('preferencesHelp')}</p>
-                    {saveButton}
-                </div>
-            </Card>
-            {user.tenancy_enabled && (
-                <Card title={t('visualDebug')} icon="monitor">
-                    <div className={body}>
-                        <Toggle
-                            label={t('traceEnabled')}
-                            help={t('enableDebugHelp')}
-                            checked={preferences.visual_debug}
-                            onChange={(value) => change('visual_debug', value)}
-                        />
-                        <button type="submit" form="profile-settings-form" className="btn primary" disabled={busy}>
-                            {t('save')}
+                    }
+                />
+            </Group>
+        ),
+        tools: (
+            <Group title={t('settingsGroupTools')}>
+                {user.tenancy_enabled && (
+                    <Row
+                        icon="monitor"
+                        title={t('visualDebug')}
+                        description={t('enableDebugHelp')}
+                        control={
+                            <Switch
+                                label={t('traceEnabled')}
+                                checked={preferences.visual_debug}
+                                onChange={(value) => commit({ ...preferences, visual_debug: value })}
+                            />
+                        }
+                    />
+                )}
+                <Row
+                    icon="refresh"
+                    title={t('resetSettings')}
+                    description={t('resetSettingsHelp')}
+                    control={
+                        <button type="button" className="btn secondary" disabled={busy} onClick={restoreDefaults}>
+                            {t('restoreDefaults')}
                         </button>
-                    </div>
-                </Card>
-            )}
-            <Card title={t('resetSettings')} icon="refresh">
-                <div className={body}>
-                    <p className={hint}>{t('resetSettingsHelp')}</p>
-                    <button type="button" className="btn secondary" disabled={busy} onClick={restoreDefaults}>
-                        {t('restoreDefaults')}
+                    }
+                />
+            </Group>
+        ),
+    };
+
+    return (
+        <div className="flex gap-8 max-lg:flex-col max-lg:gap-5">
+            {/* Categories on the left, like a browser settings page; a scrollable strip on phones. */}
+            <nav
+                aria-label={t('settings')}
+                className="w-[212px] shrink-0 self-start max-lg:flex max-lg:w-full max-lg:gap-2 max-lg:overflow-x-auto max-lg:pb-1 lg:sticky lg:top-[92px]"
+            >
+                {sections.map(([key, icon, label]) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSection(key)}
+                        aria-current={section === key ? 'page' : undefined}
+                        className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-[13px] font-semibold max-lg:shrink-0 max-lg:whitespace-nowrap lg:mb-1 lg:w-full ${
+                            section === key
+                                ? 'bg-brand-tint text-brand'
+                                : 'text-muted hover:bg-surface-alt hover:text-ink'
+                        }`}
+                    >
+                        <Icon name={icon} size={18} />
+                        {label}
                     </button>
-                </div>
-            </Card>
-            <section className="panel mb-6 p-[25px]">
-                <Icon name="shield" size={26} className="mb-[13px] text-brand" />
-                <h3 className="text-[13px] font-semibold">
-                    {t('accountRole')}: {t(user.role)}
-                </h3>
-                <p className="mb-5 mt-1.5 text-[12px] text-muted">{t('roleHelp')}</p>
-                <button className="btn secondary text-[#b26169]" onClick={() => router.post('/logout')}>
-                    <Icon name="logout" size={17} />
-                    {t('logout')}
-                </button>
-            </section>
-            <DeleteAccount />
+                ))}
+            </nav>
+            <div className="min-w-0 max-w-[880px] flex-1">{panels[section]}</div>
         </div>
     );
 }
