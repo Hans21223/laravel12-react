@@ -189,10 +189,11 @@ function SidebarNav({ user, view, summary, notifications, navigate, onClose, inD
     );
 }
 
-function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
+function Topbar({ user, view, notifications, navigate, onMenu, onSearch, onReadAll, onNotificationOpen }) {
     const { t } = useLocale();
     const menuItem =
         'flex w-full items-center gap-2.5 !rounded-[3px] px-3 py-[11px] text-left data-[focus]:bg-brand-tint';
+    const notificationIcons = { approved: 'check', rejected: 'close', commented: 'comment' };
     return (
         <header className="workspace-topbar">
             <div className="flex items-center gap-3 whitespace-nowrap text-[13px] text-muted max-md:gap-[9px]">
@@ -219,16 +220,83 @@ function Topbar({ user, view, notifications, navigate, onMenu, onSearch }) {
                     </kbd>
                 </button>
                 <LanguagePicker />
-                <button
-                    className="icon-button relative"
-                    aria-label={t('notifications')}
-                    onClick={() => navigate('notifications')}
-                >
-                    <Icon name="bell" />
-                    {notifications.unread > 0 && (
-                        <i className="absolute right-[3px] top-1.5 size-[5px] rounded-full border border-surface bg-signal" />
-                    )}
-                </button>
+                <Menu as="div" className="relative">
+                    <MenuButton
+                        className="icon-button relative"
+                        aria-label={t('notifications')}
+                    >
+                        <Icon name="bell" />
+                        {notifications.unread > 0 && (
+                            <i className="absolute right-[3px] top-1.5 size-[5px] rounded-full border border-surface bg-signal" />
+                        )}
+                    </MenuButton>
+                    <MenuItems className="absolute right-0 top-[calc(100%_+_12px)] z-[70] w-[340px] max-w-[calc(100vw_-_24px)] rounded-[5px] border border-t-[3px] border-line border-t-[#c64250] bg-surface p-[7px] [box-shadow:0_16px_48px_#09162730]">
+                        <div className="mb-[5px] flex items-center justify-between gap-2 border-b border-b-line p-3">
+                            <strong>{t('notifications')}</strong>
+                            {notifications.unread > 0 && (
+                                <CountPill>
+                                    {notifications.unread} {t('unread')}
+                                </CountPill>
+                            )}
+                        </div>
+                        {notifications.items.length ? (
+                            <>
+                                {notifications.items.slice(0, 5).map((n) => (
+                                    <MenuItem key={n.id}>
+                                        <button
+                                            className={`${menuItem} !items-start`}
+                                            onClick={() => onNotificationOpen(n)}
+                                        >
+                                            <Icon
+                                                name={notificationIcons[n.action] || 'inbox'}
+                                                size={17}
+                                                className={`mt-px shrink-0 ${n.action === 'rejected' ? 'text-[#b47d70]' : 'text-brand'}`}
+                                            />
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-[12px] font-semibold">
+                                                    {t(`notification${n.action[0].toUpperCase() + n.action.slice(1)}`)}
+                                                </span>
+                                                <span className="mt-0.5 block truncate text-[11px] text-muted">
+                                                    {n.title}
+                                                </span>
+                                            </span>
+                                            {!n.read_at && (
+                                                <i className="mt-1.5 size-1.5 shrink-0 rounded-full bg-signal" />
+                                            )}
+                                        </button>
+                                    </MenuItem>
+                                ))}
+                                <div className="mt-[5px] flex items-center gap-1 border-t border-t-line pt-[5px]">
+                                    <MenuItem>
+                                        <button
+                                            className={`${menuItem} flex-1`}
+                                            onClick={() => navigate('notifications')}
+                                        >
+                                            <Icon name="inbox" size={16} />
+                                            {t('viewAllNotifications')}
+                                        </button>
+                                    </MenuItem>
+                                    <MenuItem>
+                                        <button
+                                            className={`${menuItem} !w-auto shrink-0 disabled:opacity-40`}
+                                            onClick={onReadAll}
+                                            disabled={!notifications.unread}
+                                        >
+                                            <Icon name="check" size={16} />
+                                            {t('readAll')}
+                                        </button>
+                                    </MenuItem>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-muted">
+                                <Icon name="bell" size={24} />
+                                <span className="text-[12px]">{t('noNotifications')}</span>
+                            </div>
+                        )}
+                    </MenuItems>
+                </Menu>
+
                 <span className="h-[23px] w-px bg-line max-md:hidden" />
                 <Menu as="div" className="relative">
                     <MenuButton
@@ -1119,6 +1187,8 @@ function WorkspaceContent({ initialUser, realtime }) {
                     {...navProps}
                     onMenu={() => setMobile(true)}
                     onSearch={() => setSearchModal(true)}
+                    onReadAll={readAll}
+                    onNotificationOpen={notificationOpen}
                 />
                 <main
                     className="m-auto max-w-[1560px] px-9 pb-0 pt-9 max-xl:px-7 max-md:px-[18px] max-md:pt-[25px] print:px-0"
